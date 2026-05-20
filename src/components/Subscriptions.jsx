@@ -72,7 +72,7 @@ function Subscriptions({ token }) {
     brand: 'netflix',
     customBrand: '',
     amount: '',
-    currency: '$',
+    currency: '₹',
     billingDay: 1
   });
 
@@ -147,7 +147,7 @@ function Subscriptions({ token }) {
 
   const resetForm = () => {
     setEditingId(null);
-    setFormData({ brand: 'netflix', customBrand: '', amount: '', currency: '$', billingDay: 1 });
+    setFormData({ brand: 'netflix', customBrand: '', amount: '', currency: '₹', billingDay: 1 });
   };
 
   const startEdit = (sub) => {

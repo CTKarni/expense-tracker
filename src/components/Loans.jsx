@@ -10,7 +10,7 @@ function Loans({ token }) {
     name: '',
     totalAmount: '',
     emiAmount: '',
-    currency: '$',
+    currency: '₹',
     endDate: new Date().toISOString().split('T')[0]
   });
 

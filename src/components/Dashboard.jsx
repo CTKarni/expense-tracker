@@ -8,8 +8,8 @@ function Dashboard({ token }) {
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
-    currency: '$',
-    category: 'everyday',
+    currency: '₹',
+    category: 'food',
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -121,8 +121,11 @@ function Dashboard({ token }) {
           <div className="form-group">
             <label>Category</label>
             <select name="category" value={formData.category} onChange={handleInputChange}>
-              <option value="everyday">Everyday Expense</option>
-              <option value="emi">Loan EMI</option>
+              <option value="food">Food</option>
+              <option value="travel">Travel</option>
+              <option value="shopping">Shopping</option>
+              <option value="entertainment">Entertainment</option>
+              <option value="utilities">Utilities</option>
               <option value="other">Other</option>
             </select>
           </div>
@@ -159,7 +162,7 @@ function Dashboard({ token }) {
                     </div>
                   </td>
                   <td style={{ fontWeight: 500 }}>{expense.description}</td>
-                  <td><span style={{ fontSize: '0.8rem', background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px' }}>{expense.category}</span></td>
+                  <td><span style={{ fontSize: '0.8rem', background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', textTransform: 'capitalize' }}>{expense.category}</span></td>
                   <td style={{ textAlign: 'right', fontWeight: 600 }}>
                     {expense.currency}{expense.amount.toFixed(2)}
                   </td>
