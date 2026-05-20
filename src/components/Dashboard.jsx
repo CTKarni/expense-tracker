@@ -142,37 +142,39 @@ function Dashboard({ token }) {
       <div className="card">
         <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Recent Expenses</h3>
         {expenses.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th style={{ textAlign: 'right' }}>Amount</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.map(expense => (
-                <tr key={expense.id}>
-                  <td style={{ color: 'var(--text-secondary)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Calendar size={14} />
-                      {new Date(expense.date).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td style={{ fontWeight: 500 }}>{expense.description}</td>
-                  <td><span style={{ fontSize: '0.8rem', background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', textTransform: 'capitalize' }}>{expense.category}</span></td>
-                  <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                    {expense.currency}{expense.amount.toFixed(2)}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button className="delete-btn" onClick={() => deleteExpense(expense.id)}><Trash2 size={16} /></button>
-                  </td>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th style={{ textAlign: 'right' }}>Amount</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {expenses.map(expense => (
+                  <tr key={expense.id}>
+                    <td style={{ color: 'var(--text-secondary)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Calendar size={14} />
+                        {new Date(expense.date).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td style={{ fontWeight: 500 }}>{expense.description}</td>
+                    <td><span style={{ fontSize: '0.8rem', background: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', textTransform: 'capitalize' }}>{expense.category}</span></td>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                      {expense.currency}{expense.amount.toFixed(2)}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button className="delete-btn" onClick={() => deleteExpense(expense.id)}><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="empty-state">
             <Wallet size={32} className="empty-icon" />

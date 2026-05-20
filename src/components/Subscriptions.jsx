@@ -257,38 +257,40 @@ function Subscriptions({ token }) {
       <div className="card">
         <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Your Subscriptions</h3>
         {subscriptions.length > 0 ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Service</th>
-                <th>Billing Date</th>
-                <th style={{ textAlign: 'right' }}>Cost</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {subscriptions.map(sub => (
-                <tr key={sub.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500 }}>
-                      <BrandIcon brand={sub.brand} />
-                      <span style={{ textTransform: 'capitalize' }}>{sub.brand}</span>
-                    </div>
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>Every {sub.billingDay}{
-                    sub.billingDay === 1 ? 'st' : sub.billingDay === 2 ? 'nd' : sub.billingDay === 3 ? 'rd' : 'th'
-                  } of the month</td>
-                  <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                    {sub.currency}{sub.amount.toFixed(2)}/mo
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button className="delete-btn" onClick={() => startEdit(sub)} style={{ color: 'var(--text-primary)' }}><Pencil size={16} /></button>
-                    <button className="delete-btn" onClick={() => deleteSub(sub.id)}><Trash2 size={16} /></button>
-                  </td>
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Billing Date</th>
+                  <th style={{ textAlign: 'right' }}>Cost</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {subscriptions.map(sub => (
+                  <tr key={sub.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500 }}>
+                        <BrandIcon brand={sub.brand} />
+                        <span style={{ textTransform: 'capitalize' }}>{sub.brand}</span>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)' }}>Every {sub.billingDay}{
+                      sub.billingDay === 1 ? 'st' : sub.billingDay === 2 ? 'nd' : sub.billingDay === 3 ? 'rd' : 'th'
+                    } of the month</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
+                      {sub.currency}{sub.amount.toFixed(2)}/mo
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button className="delete-btn" onClick={() => startEdit(sub)} style={{ color: 'var(--text-primary)' }}><Pencil size={16} /></button>
+                      <button className="delete-btn" onClick={() => deleteSub(sub.id)}><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="empty-state">
             <CalendarClock size={32} className="empty-icon" />
