@@ -99,9 +99,12 @@ db.serialize(() => {
       date TEXT,
       type TEXT,
       status TEXT,
+      createdAt TEXT,
       FOREIGN KEY(userId) REFERENCES users(id)
     )
-  `);
+  `, () => {
+    db.run("ALTER TABLE debts ADD COLUMN createdAt TEXT", () => {});
+  });
 });
 
 // Middleware to authenticate Firebase Token
@@ -257,9 +260,10 @@ app.get('/debts', (req, res) => {
 
 app.post('/debts', (req, res) => {
   const { id, friendName, amount, currency, date, type, status } = req.body;
+  const createdAt = new Date().toISOString();
   db.run(
-    'INSERT INTO debts (id, userId, friendName, amount, currency, date, type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    [id, req.user.id, friendName, amount, currency, date, type, status || 'pending'],
+    'INSERT INTO debts (id, userId, friendName, amount, currency, date, type, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, req.user.id, friendName, amount, currency, date, type, status || 'pending', createdAt],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });

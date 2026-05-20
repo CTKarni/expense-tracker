@@ -7,6 +7,7 @@ function Debts({ token }) {
   const [debts, setDebts] = useState([]);
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' or 'settled'
   const [editingId, setEditingId] = useState(null);
+  const [dateMode, setDateMode] = useState('today'); // 'today' | 'yesterday' | 'custom'
   const [formData, setFormData] = useState({
     friendName: '',
     amount: '',
@@ -14,6 +15,17 @@ function Debts({ token }) {
     date: new Date().toISOString().split('T')[0],
     type: 'lent' // 'lent' or 'borrowed'
   });
+
+  const handleDateModeChange = (mode) => {
+    setDateMode(mode);
+    if (mode === 'today') {
+      setFormData(prev => ({ ...prev, date: new Date().toISOString().split('T')[0] }));
+    } else if (mode === 'yesterday') {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      setFormData(prev => ({ ...prev, date: d.toISOString().split('T')[0] }));
+    }
+  };
 
   useEffect(() => {
     fetchDebts();
@@ -118,6 +130,19 @@ function Debts({ token }) {
       date: debt.date,
       type: debt.type
     });
+    // Deduce dateMode from the debt's date value
+    const todayStr = new Date().toISOString().split('T')[0];
+    const yesD = new Date();
+    yesD.setDate(yesD.getDate() - 1);
+    const yesterdayStr = yesD.toISOString().split('T')[0];
+
+    if (debt.date === todayStr) {
+      setDateMode('today');
+    } else if (debt.date === yesterdayStr) {
+      setDateMode('yesterday');
+    } else {
+      setDateMode('custom');
+    }
   };
 
   const deleteDebt = async (id) => {
@@ -136,6 +161,7 @@ function Debts({ token }) {
 
   const resetForm = () => {
     setEditingId(null);
+    setDateMode('today');
     setFormData({
       friendName: '',
       amount: '',
@@ -264,12 +290,44 @@ function Debts({ token }) {
               />
             </div>
           </div>
+          <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <label>Transaction Date Source</label>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+              {['today', 'yesterday', 'custom'].map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => handleDateModeChange(mode)}
+                  style={{
+                    flex: 1,
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '6px',
+                    border: '1px solid ' + (dateMode === mode ? 'var(--accent-primary)' : 'var(--border-color)'),
+                    background: dateMode === mode ? 'rgba(99, 102, 241, 0.1)' : 'var(--surface-color)',
+                    color: dateMode === mode ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    fontSize: '0.85rem',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    textTransform: 'capitalize',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {mode === 'today' ? '📅 Today (Locked)' : mode === 'yesterday' ? '📅 Yesterday (Locked)' : '✍️ Custom Date'}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="form-group">
-            <label>Date Given / Taken</label>
+            <label>Selected Date</label>
             <input 
               type="date" 
               value={formData.date}
               onChange={e => setFormData({ ...formData, date: e.target.value })}
+              disabled={dateMode !== 'custom'}
+              style={{
+                background: dateMode !== 'custom' ? 'rgba(0,0,0,0.05)' : 'var(--surface-color)',
+                cursor: dateMode !== 'custom' ? 'not-allowed' : 'pointer'
+              }}
               required 
             />
           </div>
@@ -365,9 +423,16 @@ function Debts({ token }) {
                       </div>
                     </td>
                     <td style={{ color: 'var(--text-secondary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem' }}>
-                        <Calendar size={14} />
-                        {new Date(debt.date).toLocaleDateString()}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                          <Calendar size={14} />
+                          {new Date(debt.date).toLocaleDateString()}
+                        </div>
+                        {debt.createdAt && (
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }} title={new Date(debt.createdAt).toLocaleString()}>
+                            Logged: {new Date(debt.createdAt).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td>
