@@ -1,0 +1,17 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+
+# Local database and credentials files
+server/database.sqlite
+server/serviceAccountKey.json
+
+# IDEs and OS files
+.DS_Store
+.vscode/
+.idea/
+*.log
