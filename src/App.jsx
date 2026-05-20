@@ -54,7 +54,7 @@ function App() {
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error signing in with Google", error);
-      alert("Failed to sign in. Have you configured your Firebase credentials in src/firebase.js?");
+      alert(`Failed to sign in: ${error.code || error.message}\n\nCommon Fix:\nAdd your domain (${window.location.hostname}) to the "Authorized Domains" list in the Firebase Console under: Build > Authentication > Settings > Authorized Domains.`);
     }
   };
 
