@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Receipt, RefreshCw, Landmark, LogOut, Wallet } from 'lucide-react';
+import { LayoutDashboard, Receipt, RefreshCw, Landmark, LogOut, Wallet, Users } from 'lucide-react';
 import { auth } from '../firebase';
 
 function Sidebar({ user, onLogout }) {
@@ -19,6 +19,9 @@ function Sidebar({ user, onLogout }) {
         </NavLink>
         <NavLink to="/loans" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
           <Landmark size={20} /> Loans
+        </NavLink>
+        <NavLink to="/debts" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+          <Users size={20} /> Debts
         </NavLink>
       </nav>
 

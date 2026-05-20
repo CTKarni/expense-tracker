@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Subscriptions from './components/Subscriptions';
 import Loans from './components/Loans';
+import Debts from './components/Debts';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -94,6 +95,7 @@ function App() {
             <Route path="/" element={<Dashboard token={token} />} />
             <Route path="/subscriptions" element={<Subscriptions token={token} />} />
             <Route path="/loans" element={<Loans token={token} />} />
+            <Route path="/debts" element={<Debts token={token} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

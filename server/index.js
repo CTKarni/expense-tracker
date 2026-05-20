@@ -45,7 +45,11 @@ db.serialize(() => {
       email TEXT,
       name TEXT
     )
-  `);
+  `, () => {
+    // Add columns dynamically in case the DB was initialized with an older schema
+    db.run("ALTER TABLE users ADD COLUMN email TEXT", () => {});
+    db.run("ALTER TABLE users ADD COLUMN name TEXT", () => {});
+  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS expenses (
@@ -81,6 +85,20 @@ db.serialize(() => {
       emiAmount REAL,
       currency TEXT,
       endDate TEXT,
+      FOREIGN KEY(userId) REFERENCES users(id)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS debts (
+      id TEXT PRIMARY KEY,
+      userId TEXT,
+      friendName TEXT,
+      amount REAL,
+      currency TEXT,
+      date TEXT,
+      type TEXT,
+      status TEXT,
       FOREIGN KEY(userId) REFERENCES users(id)
     )
   `);
@@ -224,6 +242,45 @@ app.post('/loans', (req, res) => {
 
 app.delete('/loans/:id', (req, res) => {
   db.run('DELETE FROM loans WHERE id = ? AND userId = ?', [req.params.id, req.user.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+// Debts
+app.get('/debts', (req, res) => {
+  db.all('SELECT * FROM debts WHERE userId = ? ORDER BY date DESC', [req.user.id], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/debts', (req, res) => {
+  const { id, friendName, amount, currency, date, type, status } = req.body;
+  db.run(
+    'INSERT INTO debts (id, userId, friendName, amount, currency, date, type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, req.user.id, friendName, amount, currency, date, type, status || 'pending'],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    }
+  );
+});
+
+app.put('/debts/:id', (req, res) => {
+  const { friendName, amount, currency, date, type, status } = req.body;
+  db.run(
+    'UPDATE debts SET friendName = ?, amount = ?, currency = ?, date = ?, type = ?, status = ? WHERE id = ? AND userId = ?',
+    [friendName, amount, currency, date, type, status, req.params.id, req.user.id],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    }
+  );
+});
+
+app.delete('/debts/:id', (req, res) => {
+  db.run('DELETE FROM debts WHERE id = ? AND userId = ?', [req.params.id, req.user.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
