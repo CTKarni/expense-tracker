@@ -1,13 +1,215 @@
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, Check, RotateCcw, User, Calendar, Coins } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Check, RotateCcw, User, Calendar, Coins, AlertCircle } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001';
+
+// Custom Modern Calendar Picker Component
+function ModernDatePicker({ value, onChange, disabled }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [viewDate, setViewDate] = useState(() => {
+    if (value && value !== 'approximate') {
+      return new Date(value);
+    }
+    return new Date();
+  });
+
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const months = [
+    "January", "February", "March", "April", "May", "June", 
+    "July", "August", "September", "October", "November", "December"
+  ];
+  
+  const daysOfWeek = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
+  const getFirstDayOfMonth = (y, m) => new Date(y, m, 1).getDay();
+
+  const handlePrevMonth = () => {
+    setViewDate(prev => {
+      const newMonth = prev.getMonth() - 1;
+      const newYear = newMonth < 0 ? prev.getFullYear() - 1 : prev.getFullYear();
+      const m = newMonth < 0 ? 11 : newMonth;
+      return new Date(newYear, m, 1);
+    });
+  };
+
+  const handleNextMonth = () => {
+    setViewDate(prev => {
+      const newMonth = prev.getMonth() + 1;
+      const newYear = newMonth > 11 ? prev.getFullYear() + 1 : prev.getFullYear();
+      const m = newMonth > 11 ? 0 : newMonth;
+      return new Date(newYear, m, 1);
+    });
+  };
+
+  const handleDaySelect = (day) => {
+    const selected = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
+    const offset = selected.getTimezoneOffset();
+    const localDate = new Date(selected.getTime() - (offset * 60 * 1000));
+    onChange(localDate.toISOString().split('T')[0]);
+    setIsOpen(false);
+  };
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDayIndex = getFirstDayOfMonth(year, month);
+  
+  const calendarCells = [];
+  for (let i = 0; i < firstDayIndex; i++) {
+    calendarCells.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    calendarCells.push(i);
+  }
+
+  const isSelected = (day) => {
+    if (!value || value === 'approximate') return false;
+    const [vy, vm, vd] = value.split('-').map(Number);
+    return vy === year && vm === (month + 1) && vd === day;
+  };
+
+  const formattedDisplay = () => {
+    if (value === 'approximate') {
+      return '❓ Date Unknown (Approximate)';
+    }
+    if (!value) return 'Select Date';
+    const [vy, vm, vd] = value.split('-').map(Number);
+    const dateObj = new Date(vy, vm - 1, vd);
+    return dateObj.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+
+  return (
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: '100%',
+          padding: '0.65rem 0.8rem',
+          borderRadius: '8px',
+          border: '1px solid var(--border-color)',
+          background: disabled ? 'rgba(255, 255, 255, 0.03)' : 'var(--surface-color)',
+          color: disabled ? 'var(--text-secondary)' : 'var(--text-primary)',
+          textAlign: 'left',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          fontSize: '0.9rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          minHeight: '38px',
+          transition: 'all 0.2s',
+          outline: 'none'
+        }}
+      >
+        <span>{formattedDisplay()}</span>
+        <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>{isOpen && !disabled ? '▲' : '▼'}</span>
+      </button>
+
+      {isOpen && !disabled && (
+        <div style={{
+          position: 'absolute',
+          top: '110%',
+          left: 0,
+          zIndex: 999,
+          width: '280px',
+          padding: '1rem',
+          borderRadius: '12px',
+          background: 'var(--surface-color)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid var(--border-color)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+          color: 'var(--text-primary)',
+          animation: 'fadeIn 0.15s ease-out'
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+            <button 
+              type="button" 
+              onClick={handlePrevMonth} 
+              style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '4px', fontWeight: 'bold', fontSize: '1rem' }}
+            >
+              &lt;
+            </button>
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{months[month]} {year}</span>
+            <button 
+              type="button" 
+              onClick={handleNextMonth} 
+              style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '4px', fontWeight: 'bold', fontSize: '1rem' }}
+            >
+              &gt;
+            </button>
+          </div>
+
+          {/* Days of Week */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', marginBottom: '0.4rem', fontWeight: 500, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            {daysOfWeek.map(d => <div key={d}>{d}</div>)}
+          </div>
+
+          {/* Days Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+            {calendarCells.map((day, idx) => (
+              <div key={idx} style={{ height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {day ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDaySelect(day)}
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: 'none',
+                      borderRadius: '50%',
+                      background: isSelected(day) ? 'var(--accent-primary)' : 'transparent',
+                      color: isSelected(day) ? '#fff' : 'var(--text-primary)',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      fontWeight: isSelected(day) ? 600 : 400,
+                      transition: 'all 0.15s'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected(day)) {
+                        e.target.style.background = 'rgba(99, 102, 241, 0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected(day)) {
+                        e.target.style.background = 'transparent';
+                      }
+                    }}
+                  >
+                    {day}
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Debts({ token }) {
   const [debts, setDebts] = useState([]);
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' or 'settled'
   const [editingId, setEditingId] = useState(null);
-  const [dateMode, setDateMode] = useState('today'); // 'today' | 'yesterday' | 'custom'
   const [formData, setFormData] = useState({
     friendName: '',
     amount: '',
@@ -15,17 +217,6 @@ function Debts({ token }) {
     date: new Date().toISOString().split('T')[0],
     type: 'lent' // 'lent' or 'borrowed'
   });
-
-  const handleDateModeChange = (mode) => {
-    setDateMode(mode);
-    if (mode === 'today') {
-      setFormData(prev => ({ ...prev, date: new Date().toISOString().split('T')[0] }));
-    } else if (mode === 'yesterday') {
-      const d = new Date();
-      d.setDate(d.getDate() - 1);
-      setFormData(prev => ({ ...prev, date: d.toISOString().split('T')[0] }));
-    }
-  };
 
   useEffect(() => {
     fetchDebts();
@@ -130,19 +321,6 @@ function Debts({ token }) {
       date: debt.date,
       type: debt.type
     });
-    // Deduce dateMode from the debt's date value
-    const todayStr = new Date().toISOString().split('T')[0];
-    const yesD = new Date();
-    yesD.setDate(yesD.getDate() - 1);
-    const yesterdayStr = yesD.toISOString().split('T')[0];
-
-    if (debt.date === todayStr) {
-      setDateMode('today');
-    } else if (debt.date === yesterdayStr) {
-      setDateMode('yesterday');
-    } else {
-      setDateMode('custom');
-    }
   };
 
   const deleteDebt = async (id) => {
@@ -161,7 +339,6 @@ function Debts({ token }) {
 
   const resetForm = () => {
     setEditingId(null);
-    setDateMode('today');
     setFormData({
       friendName: '',
       amount: '',
@@ -221,6 +398,19 @@ function Debts({ token }) {
   };
 
   const displayedList = activeTab === 'pending' ? pendingDebts : settledDebts;
+
+  const displayDateText = (dateVal) => {
+    if (dateVal === 'approximate') {
+      return (
+        <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.85rem' }}>
+          <AlertCircle size={14} style={{ color: '#e0a800' }} />
+          Date Approximate
+        </span>
+      );
+    }
+    const [y, m, d] = dateVal.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString();
+  };
 
   return (
     <div>
@@ -290,46 +480,31 @@ function Debts({ token }) {
               />
             </div>
           </div>
-          <div className="form-group" style={{ gridColumn: 'span 2' }}>
-            <label>Transaction Date Source</label>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-              {['today', 'yesterday', 'custom'].map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => handleDateModeChange(mode)}
-                  style={{
-                    flex: 1,
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '6px',
-                    border: '1px solid ' + (dateMode === mode ? 'var(--accent-primary)' : 'var(--border-color)'),
-                    background: dateMode === mode ? 'rgba(99, 102, 241, 0.1)' : 'var(--surface-color)',
-                    color: dateMode === mode ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                    fontSize: '0.85rem',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    textTransform: 'capitalize',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {mode === 'today' ? '📅 Today (Locked)' : mode === 'yesterday' ? '📅 Yesterday (Locked)' : '✍️ Custom Date'}
-                </button>
-              ))}
-            </div>
-          </div>
           <div className="form-group">
-            <label>Selected Date</label>
-            <input 
-              type="date" 
+            <label>Transaction Date</label>
+            <ModernDatePicker 
               value={formData.date}
-              onChange={e => setFormData({ ...formData, date: e.target.value })}
-              disabled={dateMode !== 'custom'}
-              style={{
-                background: dateMode !== 'custom' ? 'rgba(0,0,0,0.05)' : 'var(--surface-color)',
-                cursor: dateMode !== 'custom' ? 'not-allowed' : 'pointer'
-              }}
-              required 
+              onChange={date => setFormData({ ...formData, date })}
+              disabled={formData.date === 'approximate'}
             />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.5rem' }}>
+              <input 
+                type="checkbox" 
+                id="approximateDate" 
+                checked={formData.date === 'approximate'}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFormData({ ...formData, date: 'approximate' });
+                  } else {
+                    setFormData({ ...formData, date: new Date().toISOString().split('T')[0] });
+                  }
+                }}
+                style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+              />
+              <label htmlFor="approximateDate" style={{ fontSize: '0.85rem', cursor: 'pointer', color: 'var(--text-secondary)', userSelect: 'none' }}>
+                I don't remember the exact transaction date
+              </label>
+            </div>
           </div>
           <div className="form-group">
             <label>Type</label>
@@ -426,7 +601,7 @@ function Debts({ token }) {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>
                           <Calendar size={14} />
-                          {new Date(debt.date).toLocaleDateString()}
+                          {displayDateText(debt.date)}
                         </div>
                         {debt.createdAt && (
                           <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }} title={new Date(debt.createdAt).toLocaleString()}>
