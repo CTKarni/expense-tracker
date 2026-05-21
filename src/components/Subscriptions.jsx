@@ -1,66 +1,94 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, CalendarClock, Pencil, X } from 'lucide-react';
-import { SiNetflix, SiApple, SiSpotify, SiHbomax, SiCrunchyroll, SiOpenai } from 'react-icons/si';
-import { FaAmazon, FaTv, FaYoutube, FaTwitch, FaXbox, FaPlaystation, FaPatreon, FaGithub } from 'react-icons/fa';
 
 const API_URL = 'http://localhost:3001';
 
-const BRAND_ICONS = {
-  netflix: <SiNetflix color="#E50914" />,
-  apple: <SiApple color="#000000" />,
-  spotify: <SiSpotify color="#1DB954" />,
-  prime: <FaAmazon color="#00A8E1" />,
-  hulu: <FaTv color="#1CE783" />,
-  disney: <FaTv color="#113CCF" />,
-  youtube: <FaYoutube color="#FF0000" />,
-  hbomax: <SiHbomax color="#5822B4" />,
-  crunchyroll: <SiCrunchyroll color="#F47521" />,
-  twitch: <FaTwitch color="#9146FF" />,
-  xbox: <FaXbox color="#107C10" />,
-  playstation: <FaPlaystation color="#003791" />,
-  patreon: <FaPatreon color="#FF424D" />,
-  github: <FaGithub color="#181717" />,
-  chatgpt: <SiOpenai color="#10A37F" />
+// Extensible domain mapping for popular services
+const BRAND_DOMAINS = {
+  netflix: 'netflix.com',
+  apple: 'apple.com',
+  spotify: 'spotify.com',
+  prime: 'primevideo.com',
+  hulu: 'hulu.com',
+  disney: 'disneyplus.com',
+  youtube: 'youtube.com',
+  hbomax: 'hbomax.com',
+  hbo: 'hbo.com',
+  crunchyroll: 'crunchyroll.com',
+  twitch: 'twitch.tv',
+  xbox: 'xbox.com',
+  playstation: 'playstation.com',
+  psplus: 'playstation.com',
+  patreon: 'patreon.com',
+  github: 'github.com',
+  chatgpt: 'chatgpt.com',
+  openai: 'openai.com',
+  google: 'google.com',
+  'google one': 'one.google.com',
+  'googleone': 'one.google.com'
 };
 
-const getBrandKey = (brand) => {
-  const normalized = brand.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (normalized.includes('netflix')) return 'netflix';
-  if (normalized.includes('apple')) return 'apple';
-  if (normalized.includes('spotify')) return 'spotify';
-  if (normalized.includes('prime') || normalized.includes('amazon')) return 'prime';
-  if (normalized.includes('hulu')) return 'hulu';
-  if (normalized.includes('disney')) return 'disney';
-  if (normalized.includes('youtube')) return 'youtube';
-  if (normalized.includes('hbo')) return 'hbomax';
-  if (normalized.includes('crunchyroll')) return 'crunchyroll';
-  if (normalized.includes('twitch')) return 'twitch';
-  if (normalized.includes('xbox')) return 'xbox';
-  if (normalized.includes('playstation') || normalized.includes('psplus')) return 'playstation';
-  if (normalized.includes('patreon')) return 'patreon';
-  if (normalized.includes('github')) return 'github';
-  if (normalized.includes('chatgpt') || normalized.includes('openai')) return 'chatgpt';
-  return brand;
+const getBrandDomain = (brand) => {
+  const clean = brand.trim().toLowerCase();
+  
+  if (BRAND_DOMAINS[clean]) {
+    return BRAND_DOMAINS[clean];
+  }
+  
+  // Clean special characters and whitespace
+  const key = clean.replace(/[^a-z0-9\s.-]/g, '');
+  if (BRAND_DOMAINS[key]) {
+    return BRAND_DOMAINS[key];
+  }
+  const collapsed = clean.replace(/[^a-z0-9.-]/g, '');
+  if (BRAND_DOMAINS[collapsed]) {
+    return BRAND_DOMAINS[collapsed];
+  }
+
+  // Already looks like a domain
+  if (clean.includes('.') && !clean.startsWith('.') && !clean.endsWith('.')) {
+    return clean;
+  }
+  
+  // Fallback domain extension
+  return `${collapsed || 'example'}.com`;
 };
 
 function BrandIcon({ brand }) {
-  const [error, setError] = useState(false);
-  const key = getBrandKey(brand);
+  const domain = getBrandDomain(brand);
+  const clearbitUrl = `https://logo.clearbit.com/${domain}`;
+  const googleFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   
-  if (BRAND_ICONS[key]) {
-    return <span style={{ fontSize: '1.25rem', display: 'flex' }}>{BRAND_ICONS[key]}</span>;
+  const [imgSrc, setImgSrc] = useState(clearbitUrl);
+  const [hasFailedOnce, setHasFailedOnce] = useState(false);
+  const [hasFailedAll, setHasFailedAll] = useState(false);
+
+  // Reset state if the brand changes
+  useEffect(() => {
+    setImgSrc(`https://logo.clearbit.com/${domain}`);
+    setHasFailedOnce(false);
+    setHasFailedAll(false);
+  }, [brand, domain]);
+
+  const handleError = () => {
+    if (!hasFailedOnce) {
+      setHasFailedOnce(true);
+      setImgSrc(googleFaviconUrl);
+    } else {
+      setHasFailedAll(true);
+    }
+  };
+
+  if (hasFailedAll) {
+    return <CalendarClock size={20} style={{ color: 'var(--text-secondary)' }} />;
   }
-  
-  if (error) {
-    return <CalendarClock size={20} />;
-  }
-  
+
   return (
     <img 
-      src={`https://logo.clearbit.com/${brand.toLowerCase().replace(/\s+/g, '')}.com`} 
+      src={imgSrc} 
       alt={brand}
-      style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain' }}
-      onError={() => setError(true)}
+      style={{ width: '20px', height: '20px', borderRadius: '4px', objectFit: 'contain', display: 'block' }}
+      onError={handleError}
     />
   );
 }
