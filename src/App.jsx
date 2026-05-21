@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { User } from 'lucide-react';
 import { auth, provider, signInWithPopup } from './firebase';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Subscriptions from './components/Subscriptions';
 import Loans from './components/Loans';
 import Debts from './components/Debts';
+import Income from './components/Income';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -14,6 +16,15 @@ function App() {
   const [mockMode, setMockMode] = useState(false);
 
   useEffect(() => {
+    // Check if guest user session is active
+    const storedGuest = localStorage.getItem('guestUser');
+    if (storedGuest) {
+      setUser(JSON.parse(storedGuest));
+      setToken('mock-' + JSON.parse(storedGuest).uid);
+      setLoading(false);
+      return;
+    }
+
     // If Firebase Auth is not configured properly, it will not fire state changes.
     // We add a mock fallback for dev testing if they haven't configured Google Cloud yet.
     if (!auth) {
@@ -58,7 +69,20 @@ function App() {
     }
   };
 
+  const handleGuestSignIn = () => {
+    const guestUser = { uid: 'guest-user', displayName: 'Guest Preview', email: 'guest@example.com' };
+    localStorage.setItem('guestUser', JSON.stringify(guestUser));
+    setUser(guestUser);
+    setToken('mock-' + guestUser.uid);
+  };
+
   const handleLogout = async () => {
+    if (localStorage.getItem('guestUser')) {
+      localStorage.removeItem('guestUser');
+      setUser(null);
+      setToken(null);
+      return;
+    }
     if (mockMode) {
       localStorage.removeItem('mockUser');
       setUser(null);
@@ -80,6 +104,12 @@ function App() {
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" style={{ width: 18 }}/>
             Continue with Google
           </button>
+          
+          <button className="guest-btn" onClick={handleGuestSignIn}>
+            <User size={18} />
+            Explore as Guest
+          </button>
+
           {mockMode && <p style={{marginTop: '1rem', fontSize: '0.8rem', color: 'orange'}}>Running in Mock Mode because Firebase is not configured.</p>}
         </div>
       </div>
@@ -93,6 +123,7 @@ function App() {
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Dashboard token={token} />} />
+            <Route path="/income" element={<Income token={token} />} />
             <Route path="/subscriptions" element={<Subscriptions token={token} />} />
             <Route path="/loans" element={<Loans token={token} />} />
             <Route path="/debts" element={<Debts token={token} />} />

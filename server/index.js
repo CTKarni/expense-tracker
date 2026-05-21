@@ -60,9 +60,12 @@ db.serialize(() => {
       currency TEXT,
       category TEXT,
       date TEXT,
+      paymentMode TEXT DEFAULT 'Cash',
       FOREIGN KEY(userId) REFERENCES users(id)
     )
-  `);
+  `, () => {
+    db.run("ALTER TABLE expenses ADD COLUMN paymentMode TEXT DEFAULT 'Cash'", () => {});
+  });
 
   db.run(`
     CREATE TABLE IF NOT EXISTS subscriptions (
@@ -105,6 +108,28 @@ db.serialize(() => {
   `, () => {
     db.run("ALTER TABLE debts ADD COLUMN createdAt TEXT", () => {});
   });
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS income (
+      id TEXT PRIMARY KEY,
+      userId TEXT,
+      source TEXT,
+      amount REAL,
+      currency TEXT,
+      date TEXT,
+      FOREIGN KEY(userId) REFERENCES users(id)
+    )
+  `);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS budgets (
+      userId TEXT,
+      category TEXT,
+      limitAmount REAL,
+      PRIMARY KEY (userId, category),
+      FOREIGN KEY(userId) REFERENCES users(id)
+    )
+  `);
 });
 
 // Middleware to authenticate Firebase Token
@@ -113,6 +138,13 @@ const authenticateToken = async (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1];
   
   if (!token) return res.status(401).json({ error: 'No token provided' });
+
+  // Allow mock- prefixed tokens to bypass verification (useful for guest previews)
+  if (token.startsWith('mock-')) {
+    const mockId = token.replace('mock-', '');
+    req.user = { id: mockId, email: `${mockId}@example.com` };
+    return next();
+  }
 
   if (isFirebaseConfigured) {
     try {
@@ -166,10 +198,10 @@ app.get('/expenses', (req, res) => {
 });
 
 app.post('/expenses', (req, res) => {
-  const { id, description, amount, currency, category, date } = req.body;
+  const { id, description, amount, currency, category, date, paymentMode } = req.body;
   db.run(
-    'INSERT INTO expenses (id, userId, description, amount, currency, category, date) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, req.user.id, description, amount, currency, category, date],
+    'INSERT INTO expenses (id, userId, description, amount, currency, category, date, paymentMode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, req.user.id, description, amount, currency, category, date, paymentMode || 'Cash'],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
@@ -288,6 +320,67 @@ app.delete('/debts/:id', (req, res) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });
+});
+
+// Income Endpoints
+app.get('/income', (req, res) => {
+  db.all('SELECT * FROM income WHERE userId = ? ORDER BY date DESC', [req.user.id], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/income', (req, res) => {
+  const { id, source, amount, currency, date } = req.body;
+  db.run(
+    'INSERT INTO income (id, userId, source, amount, currency, date) VALUES (?, ?, ?, ?, ?, ?)',
+    [id, req.user.id, source, amount, currency, date],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    }
+  );
+});
+
+app.delete('/income/:id', (req, res) => {
+  db.run('DELETE FROM income WHERE id = ? AND userId = ?', [req.params.id, req.user.id], (err) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+// Exchange Rates endpoint
+app.get('/exchange-rates', (req, res) => {
+  res.json({
+    base: '₹',
+    rates: {
+      '₹': 1,
+      '$': 83.3,
+      '€': 90.5,
+      '£': 105.2,
+      '¥': 0.54
+    }
+  });
+});
+
+// Budgets Endpoints
+app.get('/budgets', (req, res) => {
+  db.all('SELECT * FROM budgets WHERE userId = ?', [req.user.id], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/budgets', (req, res) => {
+  const { category, limitAmount } = req.body;
+  db.run(
+    'INSERT OR REPLACE INTO budgets (userId, category, limitAmount) VALUES (?, ?, ?)',
+    [req.user.id, category, limitAmount],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true, category, limitAmount });
+    }
+  );
 });
 
 const PORT = 3001;

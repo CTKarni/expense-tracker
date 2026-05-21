@@ -1,18 +1,33 @@
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Receipt, RefreshCw, Landmark, LogOut, Wallet, Users } from 'lucide-react';
+import { LayoutDashboard, Receipt, RefreshCw, Landmark, LogOut, Wallet, Users, Sun, Moon } from 'lucide-react';
 import { auth } from '../firebase';
 
 function Sidebar({ user, onLogout }) {
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <Wallet color="#3b82f6" />
+        <Wallet color="var(--accent-primary)" />
         ExpenseTracker
       </div>
       
       <nav className="nav-links">
         <NavLink to="/" className={({isActive}) => isActive ? "nav-link active" : "nav-link"} end>
           <LayoutDashboard size={20} /> Dashboard
+        </NavLink>
+        <NavLink to="/income" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+          <Receipt size={20} /> Income
         </NavLink>
         <NavLink to="/subscriptions" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
           <RefreshCw size={20} /> Subscriptions
@@ -26,13 +41,33 @@ function Sidebar({ user, onLogout }) {
       </nav>
 
       <div className="user-profile">
-        <div style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>
-          <strong>{user.displayName || 'User'}</strong>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{user.email}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <strong style={{ fontSize: '0.9rem' }}>{user.displayName || 'User'}</strong>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{user.email}</div>
+          </div>
+          <button 
+            onClick={toggleTheme} 
+            title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--border-color)',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--text-primary)'
+            }}
+          >
+            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+          </button>
         </div>
         <button 
           onClick={onLogout} 
-          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer' }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', color: 'var(--text-primary)', justifyContent: 'center' }}
         >
           <LogOut size={16} /> Logout
         </button>
