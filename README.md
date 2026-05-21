@@ -19,24 +19,29 @@ The project uses a **React (Vite) frontend** and an **Express.js backend** backe
 
 ## Core Features
 
-### 1. Dashboard & Expense Logging
-* **Quick Log**: Log expenses on-the-fly with details such as description, amount, currency (INR, USD, EUR, GBP, JPY), category, and transaction date.
-* **Smart Categories**: Group expenses by categories (Food, Travel, Shopping, Entertainment, Utilities, Other).
-* **Summary Metrics**: View total logged expenses and entry counts in a clean statistical dashboard.
-* **History Feed**: Browse and search logged expenses in a tabular layout, ordered reverse-chronologically with delete options.
+### 1. Dashboard & Premium Analytics
+* **Interactive SVG Charts**: Responsive donut chart for category allocations and side-by-side comparative bar chart representing Total Income vs. Total Expenses.
+* **Display Currency Converter**: Dynamic currency selector at the top-right that converts all stats, lists, and graphs into selected standard currencies ($ / € / £ / ₹ / ¥).
+* **Quick Log**: Log expenses with details such as description, amount, category, date, and specific **Mode of Transaction** (UPI apps: Google Pay, PhonePe, Paytm, or Cash/Card/Net Banking).
+* **Custom Category Budgets**: Set custom monthly budget limits directly inline (defaulting to ₹1000) with color-changing progress bars.
+* **History Feed**: Browse entries in a tabular layout with color-coded transaction method badges.
 
-### 2. Recurring Subscriptions Tracker
+### 2. Income Tracker
+* **Multiple Incomes Logging**: Log various income streams (Salary, Freelance, Investments) with standard currencies.
+* **Financial Health Indicators**: Computes Net Savings amount and Net Savings Rate percentages based on total income vs. total expense ratios.
+
+### 3. Recurring Subscriptions Tracker
 * **Monthly Burn Rate**: See your total monthly recurring financial commitments at a glance.
 * **Brand Recognition**: Automatic logo fetching via the Clearbit API and preloaded SVG icons for major services (Netflix, Apple, Spotify, Amazon Prime, Youtube, GitHub, ChatGPT, HBO, etc.).
 * **Flexible Billing**: Track exact billing cycle dates (1st–31st of the month).
 * **Edit/Delete Actions**: Modify existing subscriptions inline using custom dialog states.
 
-### 3. Loan & EMI Tracker
+### 4. Loan & EMI Tracker
 * **Structured Debt Registry**: Track auto loans, mortgages, or personal loans by registering the principal amount, fixed monthly EMI, and final payoff date.
-* **Visual Progress Bars**: Dynamic calculation of repayment progress based on elapsed loan duration (assuming a standard 1-year duration framework for visual completeness).
+* **Visual Progress Bars**: Repayment progress indicators based on elapsed loan duration.
 * **Payoff Forecasting**: Real-time remaining balance calculations.
 
-### 4. Friends & Debts Tracker
+### 5. Friends & Debts Tracker
 * **Two-way Ledger**: Track who owes whom by marking transactions as **Lent** (they owe you) or **Borrowed** (you owe them).
 * **Net Balance Calculations**: Sums outstanding balances across currencies. Color-coded signals immediately show if you are in the green (net lender) or red (net borrower).
 * **Modern Custom Calendar**: Uses a custom, interactive calendar dropdown instead of standard browser picker controls.
@@ -110,6 +115,7 @@ Stores individual itemized transactions:
 * `currency` (TEXT)
 * `category` (TEXT)
 * `date` (TEXT) — Date string formatted as `YYYY-MM-DD`.
+* `paymentMode` (TEXT) — E.g. 'Google Pay', 'Cash', etc.
 
 ### 3. `subscriptions`
 Stores monthly subscription records:
@@ -142,6 +148,12 @@ Stores peer-to-peer debt ledger details:
 * `status` (TEXT) — `'pending'` or `'settled'`.
 * `createdAt` (TEXT) — ISO timestamp generated at creation.
 
+### 6. `budgets`
+Stores user-defined monthly category limits:
+* `userId` (TEXT, Primary Key, Foreign Key) — References `users(id)`.
+* `category` (TEXT, Primary Key)
+* `limitAmount` (REAL)
+
 ---
 
 ## Authentication & Verification Flow
@@ -172,10 +184,9 @@ sequenceDiagram
     API-->>User: JSON Response
 ```
 
-### Development Mock Auth Mode
-If Firebase is not fully configured or is unreachable:
-1. **Frontend Fallback**: `src/App.jsx` detects if the Firebase client initialization fails. It enables a local **Mock Mode**, issuing dummy user profiles and generating a mock authorization token prefix (`mock-user-1`) stored in `localStorage`.
-2. **Backend Fallback**: If the server does not find `server/serviceAccountKey.json` on boot, it issues a console warning and processes incoming request headers unsafely (e.g. accepting `mock-` prefixed tokens or using standard placeholder credentials) for smooth local prototyping.
+### Guest Access & Dev Fallbacks
+1. **Guest Preview Mode**: For privacy-focused users or portfolio reviewers, a one-click "Explore as Guest" mode issues a temporary mock session using local storage persistence, which bypasses Firebase verification at the database API level.
+2. **Development Mock Auth**: If Firebase client initialization fails or the server does not find `server/serviceAccountKey.json` on boot, it falls back to a development simulation mode, allowing full local feature evaluation without cloud configurations.
 
 ---
 
