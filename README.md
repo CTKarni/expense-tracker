@@ -32,7 +32,7 @@ The project uses a **React (Vite) frontend** and an **Express.js backend** backe
 
 ### 3. Recurring Subscriptions Tracker
 * **Monthly Burn Rate**: See your total monthly recurring financial commitments at a glance.
-* **Brand Recognition**: Automatic logo fetching via the Clearbit API and preloaded SVG icons for major services (Netflix, Apple, Spotify, Amazon Prime, Youtube, GitHub, ChatGPT, HBO, etc.).
+* **Brand Recognition**: Dynamic logo loading via Clearbit Logo API mapped to official domains (e.g. Netflix, Apple, Spotify, Amazon Prime), with automatic fallback to Google's Favicon Service or a custom Lucide fallback icon on loading errors.
 * **Flexible Billing**: Track exact billing cycle dates (1st–31st of the month).
 * **Edit/Delete Actions**: Modify existing subscriptions inline using custom dialog states.
 
