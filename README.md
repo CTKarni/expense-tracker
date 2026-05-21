@@ -34,6 +34,7 @@ The project uses a **React (Vite) frontend** and an **Express.js backend** backe
 * **Monthly Burn Rate**: See your total monthly recurring financial commitments at a glance.
 * **Brand Recognition**: Dynamic logo loading via Clearbit Logo API mapped to official domains (e.g. Netflix, Apple, Spotify, Amazon Prime), with automatic fallback to Google's Favicon Service or a custom Lucide fallback icon on loading errors.
 * **Flexible Billing**: Track exact billing cycle dates (1st–31st of the month).
+* **Dynamic Currency Selector**: Fetches all active global currencies from the Frankfurter API, formatting options as "USD - US Dollar" and defaulting to INR, with automatic local fallback (USD, EUR, GBP, INR, JPY) on load errors.
 * **Edit/Delete Actions**: Modify existing subscriptions inline using custom dialog states.
 
 ### 4. Loan & EMI Tracker

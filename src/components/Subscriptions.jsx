@@ -96,17 +96,43 @@ function BrandIcon({ brand }) {
 function Subscriptions({ token }) {
   const [subscriptions, setSubscriptions] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [currencies, setCurrencies] = useState({});
+  const [loadingCurrencies, setLoadingCurrencies] = useState(true);
   const [formData, setFormData] = useState({
     brand: 'netflix',
     customBrand: '',
     amount: '',
-    currency: '₹',
+    currency: 'INR',
     billingDay: 1
   });
 
   useEffect(() => {
     fetchSubscriptions();
+    fetchCurrencies();
   }, [token]);
+
+  const fetchCurrencies = async () => {
+    try {
+      const res = await fetch('https://api.frankfurter.app/currencies');
+      if (res.ok) {
+        const data = await res.json();
+        setCurrencies(data);
+      } else {
+        throw new Error('Frankfurter response not OK');
+      }
+    } catch (err) {
+      console.warn('Silently falling back to original 5 currencies as Frankfurter API fetch failed.', err);
+      setCurrencies({
+        USD: 'US Dollar',
+        EUR: 'Euro',
+        GBP: 'British Pound',
+        INR: 'Indian Rupee',
+        JPY: 'Japanese Yen'
+      });
+    } finally {
+      setLoadingCurrencies(false);
+    }
+  };
 
   const fetchSubscriptions = async () => {
     try {
@@ -175,7 +201,7 @@ function Subscriptions({ token }) {
 
   const resetForm = () => {
     setEditingId(null);
-    setFormData({ brand: 'netflix', customBrand: '', amount: '', currency: '₹', billingDay: 1 });
+    setFormData({ brand: 'netflix', customBrand: '', amount: '', currency: 'INR', billingDay: 1 });
   };
 
   const startEdit = (sub) => {
@@ -255,11 +281,21 @@ function Subscriptions({ token }) {
           <div className="form-group">
             <label>Monthly Cost</label>
             <div className="amount-currency-group">
-              <select name="currency" value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
-                <option value="$">USD ($)</option>
-                <option value="€">EUR (€)</option>
-                <option value="£">GBP (£)</option>
-                <option value="₹">INR (₹)</option>
+              <select 
+                name="currency" 
+                value={formData.currency} 
+                onChange={e => setFormData({...formData, currency: e.target.value})}
+                disabled={loadingCurrencies}
+              >
+                {loadingCurrencies ? (
+                  <option value="INR">Loading currencies...</option>
+                ) : (
+                  Object.entries(currencies).map(([code, name]) => (
+                    <option key={code} value={code}>
+                      {code} - {name}
+                    </option>
+                  ))
+                )}
               </select>
               <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} step="0.01" min="0" required />
             </div>
@@ -308,7 +344,7 @@ function Subscriptions({ token }) {
                       sub.billingDay === 1 ? 'st' : sub.billingDay === 2 ? 'nd' : sub.billingDay === 3 ? 'rd' : 'th'
                     } of the month</td>
                     <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                      {sub.currency}{sub.amount.toFixed(2)}/mo
+                      {(sub.currency || 'INR').length > 1 ? `${sub.currency || 'INR'} ` : (sub.currency || 'INR')}{sub.amount.toFixed(2)}/mo
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <button className="delete-btn" onClick={() => startEdit(sub)} style={{ color: 'var(--text-primary)' }}><Pencil size={16} /></button>
