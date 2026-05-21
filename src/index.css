@@ -131,6 +131,72 @@ body {
   border-top: 1px solid var(--border-color);
 }
 
+.profile-details-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.profile-info-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.profile-info-text strong {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.profile-info-text div {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.theme-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--nav-hover-bg);
+}
+
+.logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-primary);
+  justify-content: center;
+}
+
+.logout-btn:hover {
+  background: var(--nav-hover-bg);
+}
+
 /* Authentication */
 .auth-wrapper {
   display: flex;
@@ -408,13 +474,27 @@ td {
     display: flex;
     align-items: center;
     background: transparent;
+    gap: 0.5rem;
   }
 
-  .user-profile > div {
-    display: none; /* Hide text name/email on mobile to save space */
+  .profile-details-container {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
   }
 
-  .user-profile button {
+  .profile-info-text {
+    display: none;
+  }
+
+  .theme-toggle-btn {
+    border-radius: 50% !important;
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+  }
+
+  .logout-btn {
     width: auto !important;
     padding: 0.35rem 0.6rem !important;
     font-size: 0.75rem !important;

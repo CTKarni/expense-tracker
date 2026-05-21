@@ -36,6 +36,29 @@ const db = new sqlite3.Database(join(__dirname, 'database.sqlite'), (err) => {
   else console.log('Connected to SQLite database');
 });
 
+const archiveDb = new sqlite3.Database(join(__dirname, 'archive.sqlite'), (err) => {
+  if (err) console.error('Archive database connection error:', err);
+  else console.log('Connected to SQLite archive database');
+});
+
+// Initialize Archive DB schema
+archiveDb.serialize(() => {
+  archiveDb.run(`
+    CREATE TABLE IF NOT EXISTS archived_expenses (
+      id TEXT PRIMARY KEY,
+      userId TEXT,
+      description TEXT,
+      amount REAL,
+      currency TEXT,
+      category TEXT,
+      date TEXT,
+      paymentMode TEXT,
+      archivedAt TEXT,
+      monthLabel TEXT
+    )
+  `);
+});
+
 // Initialize DB schema
 db.serialize(() => {
   // We still keep the users table to link Firebase UID to internal data if needed
@@ -379,6 +402,139 @@ app.post('/budgets', (req, res) => {
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, category, limitAmount });
+    }
+  );
+});
+
+// --- Archive Endpoints ---
+
+// Run the monthly expense archiving process
+app.post('/api/archive/run', (req, res) => {
+  const userId = req.user.id;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+  const startOfCurrentMonth = `${currentYear}-${currentMonth}-01`;
+
+  // Select all expenses before current month for this user
+  db.all(
+    'SELECT * FROM expenses WHERE userId = ? AND date < ?',
+    [userId, startOfCurrentMonth],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (rows.length === 0) {
+        return res.json({ success: true, archivedCount: 0 });
+      }
+
+      const archivedAt = new Date().toISOString();
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
+      archiveDb.serialize(() => {
+        archiveDb.run('BEGIN TRANSACTION', (beginErr) => {
+          if (beginErr) {
+            return res.status(500).json({ error: beginErr.message });
+          }
+
+          let insertError = null;
+          const stmt = archiveDb.prepare(`
+            INSERT INTO archived_expenses (
+              id, userId, description, amount, currency, category, date, paymentMode, archivedAt, monthLabel
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+
+          for (const row of rows) {
+            const [year, monthStr] = row.date.split('-');
+            const monthIndex = parseInt(monthStr, 10) - 1;
+            const monthLabel = `${monthNames[monthIndex]} ${year}`;
+
+            stmt.run([
+              row.id,
+              row.userId,
+              row.description,
+              row.amount,
+              row.currency,
+              row.category,
+              row.date,
+              row.paymentMode || 'Cash',
+              archivedAt,
+              monthLabel
+            ], (runErr) => {
+              if (runErr) {
+                insertError = runErr;
+              }
+            });
+          }
+
+          stmt.finalize((finalizeErr) => {
+            if (insertError || finalizeErr) {
+              const errorObj = insertError || finalizeErr;
+              archiveDb.run('ROLLBACK', () => {
+                res.status(500).json({ error: errorObj.message });
+              });
+              return;
+            }
+
+            archiveDb.run('COMMIT', (commitErr) => {
+              if (commitErr) {
+                archiveDb.run('ROLLBACK', () => {
+                  res.status(500).json({ error: commitErr.message });
+                });
+                return;
+              }
+
+              // After successfully writing to archiveDb, delete from main db
+              db.run(
+                'DELETE FROM expenses WHERE userId = ? AND date < ?',
+                [userId, startOfCurrentMonth],
+                (deleteErr) => {
+                  if (deleteErr) {
+                    return res.status(500).json({ error: `Archive saved but deletion from main database failed: ${deleteErr.message}` });
+                  }
+                  res.json({ success: true, archivedCount: rows.length });
+                }
+              );
+            });
+          });
+        });
+      });
+    }
+  );
+});
+
+// Get all archived expenses grouped by monthLabel
+app.get('/api/archive', (req, res) => {
+  archiveDb.all(
+    'SELECT * FROM archived_expenses WHERE userId = ? ORDER BY date DESC',
+    [req.user.id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      
+      const grouped = {};
+      rows.forEach(row => {
+        if (!grouped[row.monthLabel]) {
+          grouped[row.monthLabel] = [];
+        }
+        grouped[row.monthLabel].push(row);
+      });
+      res.json(grouped);
+    }
+  );
+});
+
+// Get archived expenses for a specific monthLabel
+app.get('/api/archive/:monthLabel', (req, res) => {
+  archiveDb.all(
+    'SELECT * FROM archived_expenses WHERE userId = ? AND monthLabel = ? ORDER BY date DESC',
+    [req.user.id, req.params.monthLabel],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
     }
   );
 });

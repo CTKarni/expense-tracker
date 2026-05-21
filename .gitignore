@@ -8,6 +8,7 @@ build/
 
 # Local database and credentials files
 server/database.sqlite
+server/archive.sqlite
 server/serviceAccountKey.json
 
 # IDEs and OS files

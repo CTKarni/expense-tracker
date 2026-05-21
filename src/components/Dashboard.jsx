@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Calendar, ShoppingBag, CreditCard, Wallet, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Calendar, ShoppingBag, CreditCard, Wallet, TrendingUp, TrendingDown, DollarSign, Archive } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001';
 
@@ -188,6 +188,29 @@ function Dashboard({ token }) {
     }
   };
 
+  const handleArchivePreviousMonths = async () => {
+    if (!window.confirm("Are you sure you want to archive expenses from previous months? This will move them to a separate archive database and remove them from this dashboard.")) {
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/archive/run`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Successfully archived ${data.archivedCount} expenses!`);
+        fetchExpenses();
+      } else {
+        const errData = await res.json();
+        alert(`Failed to archive: ${errData.error}`);
+      }
+    } catch (err) {
+      console.error('Error archiving expenses', err);
+      alert('Error archiving expenses');
+    }
+  };
+
   // Convert helper
   const convertAmount = (amount, from, to) => {
     const rates = exchangeRates.rates;
@@ -199,6 +222,12 @@ function Dashboard({ token }) {
   const totalExpensesConverted = expenses.reduce((sum, exp) => {
     return sum + convertAmount(exp.amount, exp.currency, displayCurrency);
   }, 0);
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+  const startOfCurrentMonth = `${currentYear}-${currentMonth}-01`;
+  const hasPreviousMonthsExpenses = expenses.some(exp => exp.date < startOfCurrentMonth);
 
   const totalIncomeConverted = incomes.reduce((sum, inc) => {
     return sum + convertAmount(inc.amount, inc.currency, displayCurrency);
@@ -279,20 +308,39 @@ function Dashboard({ token }) {
           <p>Financial summaries normalized across currencies</p>
         </div>
 
-        {/* Currency Controller */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Display Currency:</label>
-          <select 
-            value={displayCurrency} 
-            onChange={(e) => setDisplayCurrency(e.target.value)}
-            style={{ width: '100px', padding: '0.35rem 0.5rem', borderRadius: '6px', cursor: 'pointer' }}
-          >
-            <option value="₹">INR (₹)</option>
-            <option value="$">USD ($)</option>
-            <option value="€">EUR (€)</option>
-            <option value="£">GBP (£)</option>
-            <option value="¥">JPY (¥)</option>
-          </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {hasPreviousMonthsExpenses && (
+            <button 
+              onClick={handleArchivePreviousMonths}
+              className="primary-btn"
+              style={{ 
+                height: '34px', 
+                padding: '0 0.75rem', 
+                fontSize: '0.85rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.4rem' 
+              }}
+            >
+              <Archive size={15} /> Archive Previous Months
+            </button>
+          )}
+
+          {/* Currency Controller */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Display Currency:</label>
+            <select 
+              value={displayCurrency} 
+              onChange={(e) => setDisplayCurrency(e.target.value)}
+              style={{ width: '100px', padding: '0.35rem 0.5rem', borderRadius: '6px', cursor: 'pointer' }}
+            >
+              <option value="₹">INR (₹)</option>
+              <option value="$">USD ($)</option>
+              <option value="€">EUR (€)</option>
+              <option value="£">GBP (£)</option>
+              <option value="¥">JPY (¥)</option>
+            </select>
+          </div>
         </div>
       </div>
 

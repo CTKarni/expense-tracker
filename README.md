@@ -49,6 +49,11 @@ The project uses a **React (Vite) frontend** and an **Express.js backend** backe
 * **Approximate Dates Option**: Checkbox to designate "approximate date" when you don't recall the exact date of a historical peer-to-peer transaction.
 * **Tabs & Settlement History**: Separate active transactions from settled history. A simple toggle lets users mark debts as settled or re-open them.
 
+### 6. Monthly Expense Archiving
+* **Archive Previous Months**: Instantly move all completed expenses from previous months to a separate SQLite archive database with a single click from the Dashboard.
+* **Historical Month Explorer**: Review archived items grouped by month inside expandable card details.
+* **Localized Currency Conversions**: Convert archived figures dynamically using exchange rates with support for displaying original currency values.
+
 ---
 
 ## Tech Stack
@@ -79,7 +84,8 @@ expense-tracker/
 ├── vite.config.js              # Vite bundler configuration
 ├── server/                     # Backend API Server folder
 │   ├── index.js                # Express app, SQLite schemas & routes
-│   ├── database.sqlite         # SQLite database file (git-ignored)
+│   ├── database.sqlite         # Main active SQLite database file (git-ignored)
+│   ├── archive.sqlite          # Archived SQLite database file (git-ignored)
 │   ├── package.json            # Server package dependencies & scripts
 │   └── serviceAccountKey.json  # Firebase Admin Private Key (git-ignored)
 └── src/                        # React Frontend Source Code
@@ -92,7 +98,8 @@ expense-tracker/
         ├── Dashboard.jsx       # Daily expenses dashboard
         ├── Subscriptions.jsx   # Recurring subscription list & CRUD form
         ├── Loans.jsx           # Loan list, EMI metrics & progress bars
-        └── Debts.jsx           # Peer-to-peer debts system with custom picker
+        ├── Debts.jsx           # Peer-to-peer debts system with custom picker
+        └── Archive.jsx         # Historical monthly archives with dynamic currency
 ```
 
 ---
@@ -154,6 +161,19 @@ Stores user-defined monthly category limits:
 * `userId` (TEXT, Primary Key, Foreign Key) — References `users(id)`.
 * `category` (TEXT, Primary Key)
 * `limitAmount` (REAL)
+
+### 7. `archived_expenses` (in `archive.sqlite`)
+Stores historical itemized transactions migrated from the active database:
+* `id` (TEXT, Primary Key)
+* `userId` (TEXT)
+* `description` (TEXT)
+* `amount` (REAL)
+* `currency` (TEXT)
+* `category` (TEXT)
+* `date` (TEXT) — Date string formatted as `YYYY-MM-DD`.
+* `paymentMode` (TEXT)
+* `archivedAt` (TEXT) — ISO timestamp when archiving was executed.
+* `monthLabel` (TEXT) — Formatting tag (e.g. "April 2026") for chronological grouping.
 
 ---
 

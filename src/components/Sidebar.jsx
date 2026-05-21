@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Receipt, RefreshCw, Landmark, LogOut, Wallet, Users, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Receipt, RefreshCw, Landmark, LogOut, Wallet, Users, Sun, Moon, Archive } from 'lucide-react';
 import { auth } from '../firebase';
 
 function Sidebar({ user, onLogout }) {
@@ -38,36 +38,28 @@ function Sidebar({ user, onLogout }) {
         <NavLink to="/debts" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
           <Users size={20} /> Debts
         </NavLink>
+        <NavLink to="/archive" className={({isActive}) => isActive ? "nav-link active" : "nav-link"}>
+          <Archive size={20} /> Archive
+        </NavLink>
       </nav>
 
       <div className="user-profile">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <div>
-            <strong style={{ fontSize: '0.9rem' }}>{user.displayName || 'User'}</strong>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{user.email}</div>
+        <div className="profile-details-container">
+          <div className="profile-info-text">
+            <strong>{user.displayName || 'User'}</strong>
+            <div>{user.email}</div>
           </div>
           <button 
             onClick={toggleTheme} 
             title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--border-color)',
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-primary)'
-            }}
+            className="theme-toggle-btn"
           >
             {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
           </button>
         </div>
         <button 
           onClick={onLogout} 
-          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: '1px solid var(--border-color)', padding: '0.5rem', borderRadius: '6px', cursor: 'pointer', color: 'var(--text-primary)', justifyContent: 'center' }}
+          className="logout-btn"
         >
           <LogOut size={16} /> Logout
         </button>

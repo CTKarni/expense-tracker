@@ -8,6 +8,7 @@ import Subscriptions from './components/Subscriptions';
 import Loans from './components/Loans';
 import Debts from './components/Debts';
 import Income from './components/Income';
+import Archive from './components/Archive';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -127,6 +128,7 @@ function App() {
             <Route path="/subscriptions" element={<Subscriptions token={token} />} />
             <Route path="/loans" element={<Loans token={token} />} />
             <Route path="/debts" element={<Debts token={token} />} />
+            <Route path="/archive" element={<Archive token={token} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
