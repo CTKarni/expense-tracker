@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Landmark } from 'lucide-react';
+import { Plus, Trash2, Landmark, MoreHorizontal } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001';
 
@@ -102,12 +102,15 @@ function Loans({ token }) {
   return (
     <div>
       <div className="page-header">
-        <h1>Loan & EMI Tracker</h1>
+        <h1 style={{ letterSpacing: '-0.02em' }}>Loan & EMI Tracker</h1>
         <p>Monitor your active loans, fixed EMIs, and track the remaining balance.</p>
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Register New Loan</h3>
+        <div className="card-header-actions">
+          <h3 className="card-title">Register New Loan</h3>
+          <MoreHorizontal size={18} className="card-dots" />
+        </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label>Loan Name</label>
@@ -116,7 +119,7 @@ function Loans({ token }) {
           <div className="form-group">
             <label>Total Loan Amount</label>
             <div className="amount-currency-group">
-              <select name="currency" value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}>
+              <select name="currency" value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})} className="currency-select" style={{ width: '110px' }}>
                 <option value="$">USD ($)</option>
                 <option value="€">EUR (€)</option>
                 <option value="£">GBP (£)</option>
@@ -140,27 +143,44 @@ function Loans({ token }) {
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Active Loans</h3>
+        <div className="card-header-actions">
+          <h3 className="card-title">Active Loans</h3>
+          <MoreHorizontal size={18} className="card-dots" />
+        </div>
         {loans.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {loans.map(loan => {
               const { percent, remaining } = calculateProgress(loan);
               return (
-                <div key={loan.id} style={{ border: '1px solid var(--border-color)', padding: '1.25rem', borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <div key={loan.id} style={{ border: '1px solid var(--border-color)', padding: '1.25rem', borderRadius: '14px', background: 'var(--bg-color)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'flex-start' }}>
                     <div>
-                      <h4 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.25rem' }}>{loan.name}</h4>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{loan.name}</h4>
+                        <span style={{
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: '20px',
+                          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                          color: '#10b981',
+                          border: '1px solid rgba(16, 185, 129, 0.2)',
+                          textTransform: 'uppercase'
+                        }}>
+                          Active
+                        </span>
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem', fontWeight: 500 }}>
                         EMI: {loan.currency}{loan.emiAmount.toFixed(2)}/mo • Ends: {new Date(loan.endDate).toLocaleDateString()}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <button className="delete-btn" onClick={() => deleteLoan(loan.id)}><Trash2 size={16}/></button>
+                      <button className="delete-row-btn" onClick={() => deleteLoan(loan.id)} title="Delete loan"><Trash2 size={16}/></button>
                     </div>
                   </div>
                   
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 500 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', marginBottom: '0.5rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                       <span>Paid: {loan.currency}{(loan.totalAmount - remaining).toFixed(2)}</span>
                       <span>Remaining: {loan.currency}{remaining.toFixed(2)}</span>
                     </div>
@@ -173,9 +193,9 @@ function Loans({ token }) {
             })}
           </div>
         ) : (
-          <div className="empty-state">
-            <Landmark size={32} className="empty-icon" />
-            <p>No active loans registered.</p>
+          <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1rem', color: 'var(--text-secondary)' }}>
+            <Landmark size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+            <p style={{ fontSize: '0.85rem' }}>No active loans registered.</p>
           </div>
         )}
       </div>

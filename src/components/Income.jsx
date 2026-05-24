@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Calendar, Wallet } from 'lucide-react';
+import { Plus, Trash2, Calendar, Wallet, MoreHorizontal } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001';
 
@@ -86,25 +86,34 @@ function Income({ token }) {
   return (
     <div>
       <div className="page-header">
-        <h1>Income Tracker</h1>
+        <h1 style={{ letterSpacing: '-0.02em' }}>Income Tracker</h1>
         <p>Monitor your active income streams and savings resources.</p>
       </div>
 
       <div className="summary-grid">
         <div className="summary-card">
-          <span className="summary-label">Total Registered Income</span>
-          <div className="summary-value" style={{ color: 'var(--accent-success)' }}>
+          <div className="card-header-actions">
+            <span className="summary-label">Total Registered Income</span>
+            <MoreHorizontal size={18} className="card-dots" />
+          </div>
+          <div className="summary-value" style={{ color: '#10b981' }}>
             {totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
         </div>
         <div className="summary-card">
-          <span className="summary-label">Income Sources</span>
+          <div className="card-header-actions">
+            <span className="summary-label">Income Sources</span>
+            <MoreHorizontal size={18} className="card-dots" />
+          </div>
           <div className="summary-value">{incomes.length}</div>
         </div>
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Log New Income Stream</h3>
+        <div className="card-header-actions">
+          <h3 className="card-title">Log New Income Stream</h3>
+          <MoreHorizontal size={18} className="card-dots" />
+        </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label>Source Type</label>
@@ -131,7 +140,7 @@ function Income({ token }) {
           <div className="form-group">
             <label>Amount</label>
             <div className="amount-currency-group">
-              <select name="currency" value={formData.currency} onChange={handleInputChange}>
+              <select name="currency" value={formData.currency} onChange={handleInputChange} className="currency-select" style={{ width: '110px' }}>
                 <option value="₹">INR (₹)</option>
                 <option value="$">USD ($)</option>
                 <option value="€">EUR (€)</option>
@@ -151,43 +160,39 @@ function Income({ token }) {
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Income History</h3>
+        <div className="card-header-actions">
+          <h3 className="card-title">Income History</h3>
+          <MoreHorizontal size={18} className="card-dots" />
+        </div>
         {incomes.length > 0 ? (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Source</th>
-                  <th style={{ textAlign: 'right' }}>Amount</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {incomes.map(income => (
-                  <tr key={income.id}>
-                    <td style={{ color: 'var(--text-secondary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Calendar size={14} />
-                        {new Date(income.date).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td style={{ fontWeight: 500, textTransform: 'capitalize' }}>{income.source}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--accent-success)' }}>
-                      {income.currency}{income.amount.toFixed(2)}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <button className="delete-btn" onClick={() => deleteIncome(income.id)}><Trash2 size={16} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            {incomes.map(income => (
+              <div key={income.id} className="transaction-row-item">
+                <div className="transaction-icon-box" style={{ background: 'rgba(16, 185, 129, 0.08)' }}>
+                  <Wallet size={18} style={{ color: '#10b981' }} />
+                </div>
+                <div className="transaction-details">
+                  <span className="transaction-desc" style={{ textTransform: 'capitalize' }}>{income.source}</span>
+                  <span className="transaction-date" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <Calendar size={12} />
+                    {new Date(income.date).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="transaction-amount-badge">
+                  <span className="transaction-amount" style={{ color: '#10b981' }}>
+                    +{income.currency}{income.amount.toFixed(2)}
+                  </span>
+                </div>
+                <button className="delete-row-btn" onClick={() => deleteIncome(income.id)} title="Delete income">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="empty-state">
-            <Wallet size={32} className="empty-icon" />
-            <p>No income streams logged yet.</p>
+          <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1rem', color: 'var(--text-secondary)' }}>
+            <Wallet size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+            <p style={{ fontSize: '0.85rem' }}>No income streams logged yet.</p>
           </div>
         )}
       </div>

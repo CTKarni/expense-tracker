@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, ChevronDown, ChevronUp, Wallet } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Wallet, Utensils, Car, ShoppingBag, Clapperboard, FileText, HelpCircle } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001';
 
@@ -92,6 +92,28 @@ function Archive({ token }) {
     })
     .sort((a, b) => b.latestDate - a.latestDate);
 
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'food': return <Utensils size={18} style={{ color: 'var(--accent-danger)' }} />;
+      case 'travel': return <Car size={18} style={{ color: '#f59e0b' }} />;
+      case 'shopping': return <ShoppingBag size={18} style={{ color: '#3b82f6' }} />;
+      case 'entertainment': return <Clapperboard size={18} style={{ color: '#ec4899' }} />;
+      case 'utilities': return <FileText size={18} style={{ color: '#10b981' }} />;
+      default: return <HelpCircle size={18} style={{ color: '#8b5cf6' }} />;
+    }
+  };
+
+  const getCategoryBgColor = (category) => {
+    switch (category) {
+      case 'food': return 'rgba(239, 68, 68, 0.08)';
+      case 'travel': return 'rgba(245, 158, 11, 0.08)';
+      case 'shopping': return 'rgba(59, 130, 246, 0.08)';
+      case 'entertainment': return 'rgba(236, 72, 153, 0.08)';
+      case 'utilities': return 'rgba(16, 185, 129, 0.08)';
+      default: return 'rgba(139, 92, 246, 0.08)';
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', color: 'var(--text-secondary)' }}>
@@ -104,17 +126,17 @@ function Archive({ token }) {
     <div>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1>Archive</h1>
+          <h1 style={{ letterSpacing: '-0.02em' }}>Archive</h1>
           <p>Historical monthly expenses stored in the archive database</p>
         </div>
 
         {/* Currency Controller */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Display Currency:</label>
           <select 
             value={displayCurrency} 
             onChange={(e) => setDisplayCurrency(e.target.value)}
-            style={{ width: '100px', padding: '0.35rem 0.5rem', borderRadius: '6px', cursor: 'pointer' }}
+            className="currency-select"
+            style={{ width: '110px' }}
           >
             <option value="₹">INR (₹)</option>
             <option value="$">USD ($)</option>
@@ -126,7 +148,7 @@ function Archive({ token }) {
       </div>
 
       {monthsArray.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {monthsArray.map((item) => {
             const isExpanded = !!expandedMonths[item.monthLabel];
             return (
@@ -137,18 +159,20 @@ function Archive({ token }) {
                   padding: '1.25rem 1.5rem', 
                   marginBottom: 0, 
                   cursor: 'pointer',
-                  userSelect: 'none'
+                  userSelect: 'none',
+                  borderLeft: '4px solid var(--accent-primary)',
+                  boxShadow: 'var(--shadow-md)'
                 }} 
                 onClick={() => toggleMonth(item.monthLabel)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
-                    <Calendar size={18} color="var(--accent-primary)" />
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+                    <Calendar size={18} style={{ color: 'var(--text-secondary)' }} />
                     {item.monthLabel}
                   </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                    <span style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-secondary)' }}>
-                      Total: <strong style={{ color: 'var(--text-primary)' }}>{displayCurrency}{item.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
+                      Total Spent: <strong style={{ color: 'var(--text-primary)', fontSize: '1.1rem' }}>{displayCurrency}{item.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
                     </span>
                     {isExpanded ? <ChevronUp size={20} color="var(--text-secondary)" /> : <ChevronDown size={20} color="var(--text-secondary)" />}
                   </div>
@@ -164,74 +188,48 @@ function Archive({ token }) {
                     }} 
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="table-container">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Category</th>
-                            <th>Mode</th>
-                            <th style={{ textAlign: 'right' }}>Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {item.expenses.map((expense) => {
-                            const converted = convertAmount(expense.amount, expense.currency, displayCurrency);
-                            const hasDifferentCurrency = expense.currency !== displayCurrency;
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      {item.expenses.map((expense) => {
+                        const converted = convertAmount(expense.amount, expense.currency, displayCurrency);
+                        const hasDifferentCurrency = expense.currency !== displayCurrency;
 
-                            return (
-                              <tr key={expense.id}>
-                                <td style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Calendar size={14} />
-                                    {new Date(expense.date).toLocaleDateString()}
-                                  </div>
-                                </td>
-                                <td style={{ fontWeight: 500 }}>{expense.description}</td>
-                                <td>
-                                  <span 
-                                    style={{ 
-                                      fontSize: '0.8rem', 
-                                      color: '#fff',
-                                      background: CATEGORY_COLORS[expense.category] || '#64748b', 
-                                      padding: '4px 8px', 
-                                      borderRadius: '4px', 
-                                      textTransform: 'capitalize',
-                                      fontWeight: 500
-                                    }}
-                                  >
-                                    {expense.category}
+                        return (
+                          <div key={expense.id} className="transaction-row-item">
+                            <div className="transaction-icon-box" style={{ background: getCategoryBgColor(expense.category) }}>
+                              {getCategoryIcon(expense.category)}
+                            </div>
+                            <div className="transaction-details">
+                              <span className="transaction-desc">{expense.description}</span>
+                              <span className="transaction-date" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <Calendar size={12} />
+                                {new Date(expense.date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="transaction-amount-badge">
+                              <span className="transaction-amount" style={{ color: 'var(--text-primary)' }}>
+                                {displayCurrency}{converted.toFixed(2)}
+                              </span>
+                              <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
+                                <span 
+                                  className="transaction-badge" 
+                                  style={{
+                                    backgroundColor: PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.bg || 'rgba(100, 116, 139, 0.08)',
+                                    color: PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.color || 'var(--text-secondary)',
+                                    border: `1px solid ${PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.border || 'rgba(100, 116, 139, 0.2)'}`
+                                  }}
+                                >
+                                  {expense.paymentMode || 'Cash'}
+                                </span>
+                                {hasDifferentCurrency && (
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                                    ({expense.currency}{expense.amount.toFixed(2)})
                                   </span>
-                                </td>
-                                <td>
-                                  <span 
-                                    style={{ 
-                                      fontSize: '0.75rem', 
-                                      padding: '3px 8px', 
-                                      borderRadius: '4px', 
-                                      fontWeight: 600,
-                                      backgroundColor: PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.bg || 'rgba(100, 116, 139, 0.08)',
-                                      color: PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.color || 'var(--text-secondary)',
-                                      border: `1px solid ${PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.border || 'rgba(100, 116, 139, 0.2)'}`
-                                    }}
-                                  >
-                                    {expense.paymentMode || 'Cash'}
-                                  </span>
-                                </td>
-                                <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                                  {displayCurrency}{converted.toFixed(2)}
-                                  {hasDifferentCurrency && (
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginLeft: '0.4rem', fontWeight: 400 }}>
-                                      ({expense.currency}{expense.amount.toFixed(2)})
-                                    </span>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -242,7 +240,7 @@ function Archive({ token }) {
       ) : (
         <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3.5rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
           <Wallet size={36} style={{ marginBottom: '1rem', opacity: 0.5, color: 'var(--accent-primary)' }} />
-          <p style={{ fontWeight: 500, fontSize: '1rem' }}>No archived expenses found.</p>
+          <p style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>No archived expenses found.</p>
           <p style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>Previous months' expenses will appear here once archived from the Dashboard.</p>
         </div>
       )}

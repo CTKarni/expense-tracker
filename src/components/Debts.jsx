@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Check, RotateCcw, User, Calendar, Coins, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Check, RotateCcw, User, Calendar, Coins, AlertCircle, MoreHorizontal } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001';
 
@@ -415,26 +415,35 @@ function Debts({ token }) {
   return (
     <div>
       <div className="page-header">
-        <h1>Friends & Debts Tracker</h1>
+        <h1 style={{ letterSpacing: '-0.02em' }}>Friends & Debts Tracker</h1>
         <p>Keep track of money you've lent to or borrowed from friends.</p>
       </div>
 
       {/* Summary Cards */}
       <div className="summary-grid">
         <div className="summary-card">
-          <span className="summary-label">Total Owed to You (Lent)</span>
-          <div className="summary-value" style={{ color: 'var(--accent-success)' }}>
+          <div className="card-header-actions">
+            <span className="summary-label">Total Owed to You (Lent)</span>
+            <MoreHorizontal size={18} className="card-dots" />
+          </div>
+          <div className="summary-value" style={{ color: '#10b981' }}>
             {getSummaryDisplay('lent')}
           </div>
         </div>
         <div className="summary-card">
-          <span className="summary-label">Total You Owe (Borrowed)</span>
-          <div className="summary-value" style={{ color: 'var(--accent-danger)' }}>
+          <div className="card-header-actions">
+            <span className="summary-label">Total You Owe (Borrowed)</span>
+            <MoreHorizontal size={18} className="card-dots" />
+          </div>
+          <div className="summary-value" style={{ color: '#ef4444' }}>
             {getSummaryDisplay('borrowed')}
           </div>
         </div>
         <div className="summary-card">
-          <span className="summary-label">Net Balance</span>
+          <div className="card-header-actions">
+            <span className="summary-label">Net Balance</span>
+            <MoreHorizontal size={18} className="card-dots" />
+          </div>
           <div className="summary-value" style={{ color: getNetColor() }}>
             {getSummaryDisplay('net')}
           </div>
@@ -443,9 +452,12 @@ function Debts({ token }) {
 
       {/* Add Form */}
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>
-          {editingId ? 'Edit Debt Record' : 'Log New Debt / Transaction'}
-        </h3>
+        <div className="card-header-actions">
+          <h3 className="card-title">
+            {editingId ? 'Edit Debt Record' : 'Log New Debt / Transaction'}
+          </h3>
+          <MoreHorizontal size={18} className="card-dots" />
+        </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label>Friend's Name</label>
@@ -463,6 +475,8 @@ function Debts({ token }) {
               <select 
                 value={formData.currency} 
                 onChange={e => setFormData({ ...formData, currency: e.target.value })}
+                className="currency-select"
+                style={{ width: '110px' }}
               >
                 <option value="₹">INR (₹)</option>
                 <option value="$">USD ($)</option>
@@ -525,7 +539,7 @@ function Debts({ token }) {
                 type="button" 
                 onClick={resetForm} 
                 className="primary-btn" 
-                style={{ background: 'var(--text-secondary)' }}
+                style={{ background: 'var(--text-secondary)', color: 'white' }}
               >
                 Cancel
               </button>
@@ -539,15 +553,16 @@ function Debts({ token }) {
         <button 
           onClick={() => setActiveTab('pending')}
           style={{
-            background: activeTab === 'pending' ? 'var(--accent-primary)' : 'var(--surface-color)',
+            background: activeTab === 'pending' ? '#0d2b1e' : 'var(--surface-color)',
             color: activeTab === 'pending' ? '#fff' : 'var(--text-secondary)',
-            border: '1px solid ' + (activeTab === 'pending' ? 'var(--accent-primary)' : 'var(--border-color)'),
-            padding: '0.5rem 1rem',
+            border: '1px solid ' + (activeTab === 'pending' ? '#0d2b1e' : 'var(--border-color)'),
+            padding: '0.5rem 1.25rem',
             borderRadius: '20px',
             cursor: 'pointer',
-            fontWeight: 500,
+            fontWeight: 600,
             fontSize: '0.85rem',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            boxShadow: 'var(--shadow-sm)'
           }}
         >
           Active / Pending ({pendingDebts.length})
@@ -555,129 +570,106 @@ function Debts({ token }) {
         <button 
           onClick={() => setActiveTab('settled')}
           style={{
-            background: activeTab === 'settled' ? 'var(--accent-primary)' : 'var(--surface-color)',
+            background: activeTab === 'settled' ? '#0d2b1e' : 'var(--surface-color)',
             color: activeTab === 'settled' ? '#fff' : 'var(--text-secondary)',
-            border: '1px solid ' + (activeTab === 'settled' ? 'var(--accent-primary)' : 'var(--border-color)'),
-            padding: '0.5rem 1rem',
+            border: '1px solid ' + (activeTab === 'settled' ? '#0d2b1e' : 'var(--border-color)'),
+            padding: '0.5rem 1.25rem',
             borderRadius: '20px',
             cursor: 'pointer',
-            fontWeight: 500,
+            fontWeight: 600,
             fontSize: '0.85rem',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            boxShadow: 'var(--shadow-sm)'
           }}
         >
           Settled History ({settledDebts.length})
         </button>
       </div>
 
-      {/* Table Card */}
+      {/* Table Card Overhauled into List */}
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>
-          {activeTab === 'pending' ? 'Outstanding Transactions' : 'Settled History'}
-        </h3>
+        <div className="card-header-actions">
+          <h3 className="card-title">
+            {activeTab === 'pending' ? 'Outstanding Transactions' : 'Settled History'}
+          </h3>
+          <MoreHorizontal size={18} className="card-dots" />
+        </div>
         {displayedList.length > 0 ? (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Friend</th>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th style={{ textAlign: 'right' }}>Amount</th>
-                  <th style={{ textAlign: 'center' }}>Status</th>
-                  <th style={{ width: '120px' }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayedList.map(debt => (
-                  <tr key={debt.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
-                        <User size={16} color="var(--accent-primary)" />
-                        {debt.friendName}
-                      </div>
-                    </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>
-                          <Calendar size={14} />
-                          {displayDateText(debt.date)}
-                        </div>
-                        {debt.createdAt && (
-                          <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }} title={new Date(debt.createdAt).toLocaleString()}>
-                            Logged: {new Date(debt.createdAt).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <span 
-                        style={{ 
-                          fontSize: '0.8rem', 
-                          padding: '4px 8px', 
-                          borderRadius: '4px',
-                          fontWeight: 500,
-                          background: debt.type === 'lent' ? '#e6f4ea' : '#fce8e6',
-                          color: debt.type === 'lent' ? 'var(--accent-success)' : 'var(--accent-danger)',
-                          textTransform: 'capitalize'
-                        }}
-                      >
-                        {debt.type}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                      {debt.currency}{debt.amount.toFixed(2)}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <span 
-                        style={{
-                          fontSize: '0.8rem',
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          fontWeight: 500,
-                          background: debt.status === 'settled' ? '#e8f0fe' : '#fef7e0',
-                          color: debt.status === 'settled' ? 'var(--accent-primary)' : '#b06000'
-                        }}
-                      >
-                        {debt.status === 'settled' ? 'Settled' : 'Pending'}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'flex-end' }}>
-                        <button 
-                          className="delete-btn" 
-                          onClick={() => toggleSettle(debt)}
-                          title={debt.status === 'pending' ? "Mark as Settled" : "Re-open Transaction"}
-                          style={{ color: debt.status === 'pending' ? 'var(--accent-success)' : 'var(--text-secondary)' }}
-                        >
-                          {debt.status === 'pending' ? <Check size={16} /> : <RotateCcw size={16} />}
-                        </button>
-                        <button 
-                          className="delete-btn" 
-                          onClick={() => startEdit(debt)}
-                          title="Edit"
-                          style={{ color: 'var(--text-primary)' }}
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          className="delete-btn" 
-                          onClick={() => deleteDebt(debt.id)}
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            {displayedList.map(debt => (
+              <div key={debt.id} className="transaction-row-item">
+                <div className="user-avatar" style={{ background: debt.type === 'lent' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: debt.type === 'lent' ? '#10b981' : '#ef4444' }}>
+                  {debt.friendName ? debt.friendName[0].toUpperCase() : <User size={16} />}
+                </div>
+                <div className="transaction-details">
+                  <span className="transaction-desc" style={{ textTransform: 'capitalize' }}>{debt.friendName}</span>
+                  <span className="transaction-date" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <Calendar size={12} />
+                    {displayDateText(debt.date)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  {/* Status Badges mapping to green for active/lent, grey for settled, red for borrowed */}
+                  <span 
+                    className="transaction-badge" 
+                    style={{
+                      backgroundColor: debt.status === 'settled' 
+                        ? 'rgba(107, 114, 128, 0.1)' 
+                        : debt.type === 'lent' 
+                          ? 'rgba(16, 185, 129, 0.1)' 
+                          : 'rgba(239, 68, 68, 0.1)',
+                      color: debt.status === 'settled' 
+                        ? '#6b7280' 
+                        : debt.type === 'lent' 
+                          ? '#10b981' 
+                          : '#ef4444',
+                      border: `1px solid ${
+                        debt.status === 'settled' 
+                          ? 'rgba(107, 114, 128, 0.2)' 
+                          : debt.type === 'lent' 
+                            ? 'rgba(16, 185, 129, 0.2)' 
+                            : 'rgba(239, 68, 68, 0.2)'
+                      }`
+                    }}
+                  >
+                    {debt.status === 'settled' ? 'Settled' : debt.type === 'lent' ? 'Lent' : 'Borrowed'}
+                  </span>
+                  <span className="transaction-amount" style={{ color: debt.type === 'lent' ? '#10b981' : '#ef4444' }}>
+                    {debt.type === 'lent' ? '+' : '-'}{debt.currency}{debt.amount.toFixed(2)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                  <button 
+                    className="delete-row-btn" 
+                    onClick={() => toggleSettle(debt)}
+                    title={debt.status === 'pending' ? "Mark as Settled" : "Re-open Transaction"}
+                    style={{ color: debt.status === 'pending' ? '#10b981' : 'var(--text-secondary)' }}
+                  >
+                    {debt.status === 'pending' ? <Check size={16} /> : <RotateCcw size={16} />}
+                  </button>
+                  <button 
+                    className="delete-row-btn" 
+                    onClick={() => startEdit(debt)}
+                    title="Edit transaction"
+                    style={{ color: 'var(--text-primary)' }}
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    className="delete-row-btn" 
+                    onClick={() => deleteDebt(debt.id)}
+                    title="Delete transaction"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="empty-state">
-            <Coins size={32} className="empty-icon" />
-            <p>{activeTab === 'pending' ? 'All settled! No outstanding transactions.' : 'No settled history found.'}</p>
+          <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1rem', color: 'var(--text-secondary)' }}>
+            <Coins size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+            <p style={{ fontSize: '0.85rem' }}>{activeTab === 'pending' ? 'All settled! No outstanding transactions.' : 'No settled history found.'}</p>
           </div>
         )}
       </div>

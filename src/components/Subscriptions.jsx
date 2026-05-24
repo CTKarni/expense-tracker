@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, CalendarClock, Pencil, X } from 'lucide-react';
+import { Plus, Trash2, CalendarClock, Pencil, X, MoreHorizontal } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001';
 
@@ -236,23 +236,34 @@ function Subscriptions({ token }) {
   return (
     <div>
       <div className="page-header">
-        <h1>Recurring Subscriptions</h1>
+        <h1 style={{ letterSpacing: '-0.02em' }}>Recurring Subscriptions</h1>
         <p>Manage your monthly OTT and recurring bills without cluttering your daily expenses.</p>
       </div>
 
       <div className="summary-grid">
         <div className="summary-card">
-          <span className="summary-label">Monthly Burn Rate</span>
-          <div className="summary-value">{monthlyBurn.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+          <div className="card-header-actions">
+            <span className="summary-label">Monthly Burn Rate</span>
+            <MoreHorizontal size={18} className="card-dots" />
+          </div>
+          <div className="summary-value" style={{ color: 'var(--text-primary)' }}>
+            {monthlyBurn.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </div>
         </div>
         <div className="summary-card">
-          <span className="summary-label">Active Subs</span>
+          <div className="card-header-actions">
+            <span className="summary-label">Active Subs</span>
+            <MoreHorizontal size={18} className="card-dots" />
+          </div>
           <div className="summary-value">{subscriptions.length}</div>
         </div>
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>{editingId ? 'Edit Subscription' : 'Add Subscription'}</h3>
+        <div className="card-header-actions">
+          <h3 className="card-title">{editingId ? 'Edit Subscription' : 'Add Subscription'}</h3>
+          <MoreHorizontal size={18} className="card-dots" />
+        </div>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Brand</label>
@@ -286,6 +297,8 @@ function Subscriptions({ token }) {
                 value={formData.currency} 
                 onChange={e => setFormData({...formData, currency: e.target.value})}
                 disabled={loadingCurrencies}
+                className="currency-select"
+                style={{ width: '130px' }}
               >
                 {loadingCurrencies ? (
                   <option value="INR">Loading currencies...</option>
@@ -319,46 +332,54 @@ function Subscriptions({ token }) {
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Your Subscriptions</h3>
+        <div className="card-header-actions">
+          <h3 className="card-title">Your Subscriptions</h3>
+          <MoreHorizontal size={18} className="card-dots" />
+        </div>
         {subscriptions.length > 0 ? (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Service</th>
-                  <th>Billing Date</th>
-                  <th style={{ textAlign: 'right' }}>Cost</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions.map(sub => (
-                  <tr key={sub.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 500 }}>
-                        <BrandIcon brand={sub.brand} />
-                        <span style={{ textTransform: 'capitalize' }}>{sub.brand}</span>
-                      </div>
-                    </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>Every {sub.billingDay}{
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            {subscriptions.map(sub => (
+              <div key={sub.id} className="transaction-row-item">
+                <div className="transaction-icon-box" style={{ background: 'var(--bg-color)' }}>
+                  <BrandIcon brand={sub.brand} />
+                </div>
+                <div className="transaction-details">
+                  <span className="transaction-desc" style={{ textTransform: 'capitalize' }}>{sub.brand}</span>
+                  <span className="transaction-date">
+                    Every {sub.billingDay}{
                       sub.billingDay === 1 ? 'st' : sub.billingDay === 2 ? 'nd' : sub.billingDay === 3 ? 'rd' : 'th'
-                    } of the month</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                      {(sub.currency || 'INR').length > 1 ? `${sub.currency || 'INR'} ` : (sub.currency || 'INR')}{sub.amount.toFixed(2)}/mo
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <button className="delete-btn" onClick={() => startEdit(sub)} style={{ color: 'var(--text-primary)' }}><Pencil size={16} /></button>
-                      <button className="delete-btn" onClick={() => deleteSub(sub.id)}><Trash2 size={16} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    } of the month
+                  </span>
+                </div>
+                <div className="transaction-amount-badge">
+                  <span className="transaction-amount" style={{ color: 'var(--text-primary)' }}>
+                    {(sub.currency || 'INR').length > 1 ? `${sub.currency || 'INR'} ` : (sub.currency || 'INR')}{sub.amount.toFixed(2)}/mo
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                  <button 
+                    className="delete-row-btn" 
+                    onClick={() => startEdit(sub)} 
+                    style={{ color: 'var(--text-primary)' }}
+                    title="Edit subscription"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button 
+                    className="delete-row-btn" 
+                    onClick={() => deleteSub(sub.id)}
+                    title="Delete subscription"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="empty-state">
-            <CalendarClock size={32} className="empty-icon" />
-            <p>No active subscriptions.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2.5rem 1rem', color: 'var(--text-secondary)' }}>
+            <CalendarClock size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+            <p style={{ fontSize: '0.85rem' }}>No active subscriptions.</p>
           </div>
         )}
       </div>

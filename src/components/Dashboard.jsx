@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Calendar, ShoppingBag, CreditCard, Wallet, TrendingUp, TrendingDown, DollarSign, Archive } from 'lucide-react';
+import { Plus, Trash2, Calendar, ShoppingBag, CreditCard, Wallet, TrendingUp, TrendingDown, DollarSign, Archive, Utensils, Car, Clapperboard, FileText, HelpCircle, ArrowUpRight, ArrowDownRight, MoreHorizontal } from 'lucide-react';
 
 const API_URL = 'http://localhost:3001';
 
@@ -236,6 +236,50 @@ function Dashboard({ token }) {
   const netSavings = totalIncomeConverted - totalExpensesConverted;
   const savingsRate = totalIncomeConverted > 0 ? (netSavings / totalIncomeConverted) * 100 : 0;
 
+  // Calculate actual month-over-month statistics
+  const currentYr = now.getFullYear();
+  const currentMth = now.getMonth(); // 0-indexed
+  
+  const startOfThisMonth = new Date(currentYr, currentMth, 1);
+  const startOfNextMonth = new Date(currentYr, currentMth + 1, 1);
+  const startOfLastMonth = new Date(currentYr, currentMth - 1, 1);
+
+  // Helper to filter and sum amounts converted to display currency
+  const getSumForPeriod = (items, startDate, endDate) => {
+    return items
+      .filter(item => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate < endDate;
+      })
+      .reduce((sum, item) => sum + convertAmount(item.amount, item.currency, displayCurrency), 0);
+  };
+
+  const getCountForPeriod = (items, startDate, endDate) => {
+    return items.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate && itemDate < endDate;
+    }).length;
+  };
+
+  const thisMonthExpenses = getSumForPeriod(expenses, startOfThisMonth, startOfNextMonth);
+  const thisMonthIncome = getSumForPeriod(incomes, startOfThisMonth, startOfNextMonth);
+  const thisMonthExpensesCount = getCountForPeriod(expenses, startOfThisMonth, startOfNextMonth);
+
+  const lastMonthExpenses = getSumForPeriod(expenses, startOfLastMonth, startOfThisMonth);
+  const lastMonthIncome = getSumForPeriod(incomes, startOfLastMonth, startOfThisMonth);
+
+  const calculateChangePercent = (current, previous) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
+  const expensesChangePercent = calculateChangePercent(thisMonthExpenses, lastMonthExpenses);
+  const incomeChangePercent = calculateChangePercent(thisMonthIncome, lastMonthIncome);
+
+  const thisMonthSavings = thisMonthIncome - thisMonthExpenses;
+  const lastMonthSavings = lastMonthIncome - lastMonthExpenses;
+  const savingsChangePercent = calculateChangePercent(thisMonthSavings, lastMonthSavings);
+
   // Calculate spending per category in display currency
   const categoryTotals = expenses.reduce((acc, exp) => {
     const amt = convertAmount(exp.amount, exp.currency, displayCurrency);
@@ -300,39 +344,93 @@ function Dashboard({ token }) {
     );
   });
 
+  const getBiggestCategory = () => {
+    if (donutData.length === 0) return { name: 'None', value: 0, percent: 0 };
+    const sorted = [...donutData].sort((a, b) => b.value - a.value);
+    const biggest = sorted[0];
+    const percent = totalDonutValue > 0 ? (biggest.value / totalDonutValue) * 100 : 0;
+    return { name: biggest.name, value: biggest.value, percent };
+  };
+
+  const biggestCategory = getBiggestCategory();
+
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'food': return <Utensils size={18} style={{ color: 'var(--accent-danger)' }} />;
+      case 'travel': return <Car size={18} style={{ color: '#f59e0b' }} />;
+      case 'shopping': return <ShoppingBag size={18} style={{ color: '#3b82f6' }} />;
+      case 'entertainment': return <Clapperboard size={18} style={{ color: '#ec4899' }} />;
+      case 'utilities': return <FileText size={18} style={{ color: '#10b981' }} />;
+      default: return <HelpCircle size={18} style={{ color: '#8b5cf6' }} />;
+    }
+  };
+
+  const getCategoryBgColor = (category) => {
+    switch (category) {
+      case 'food': return 'rgba(239, 68, 68, 0.08)';
+      case 'travel': return 'rgba(245, 158, 11, 0.08)';
+      case 'shopping': return 'rgba(59, 130, 246, 0.08)';
+      case 'entertainment': return 'rgba(236, 72, 153, 0.08)';
+      case 'utilities': return 'rgba(16, 185, 129, 0.08)';
+      default: return 'rgba(139, 92, 246, 0.08)';
+    }
+  };
+
   return (
     <div>
+      {/* Top Header */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1>Dashboard</h1>
-          <p>Financial summaries normalized across currencies</p>
+          <h1 style={{ letterSpacing: '-0.02em' }}>Dashboard</h1>
+          <p>An any way to manage expenses with care and precision.</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           {hasPreviousMonthsExpenses && (
             <button 
               onClick={handleArchivePreviousMonths}
               className="primary-btn"
               style={{ 
-                height: '34px', 
-                padding: '0 0.75rem', 
+                height: '38px', 
+                padding: '0 1rem', 
                 fontSize: '0.85rem', 
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '0.4rem' 
+                gap: '0.4rem',
+                borderRadius: '20px'
               }}
             >
               <Archive size={15} /> Archive Previous Months
             </button>
           )}
 
+          {/* Date Selector Pill */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            background: 'var(--surface-color)',
+            border: '1px solid var(--border-color)',
+            padding: '0.45rem 1rem',
+            borderRadius: '20px',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            color: 'var(--text-primary)',
+            boxShadow: 'var(--shadow-sm)',
+            cursor: 'pointer'
+          }}>
+            <Calendar size={15} style={{ color: 'var(--text-secondary)' }} />
+            <span>{startOfThisMonth.toLocaleDateString(undefined, {month: 'short', year: 'numeric'})} - {now.toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</span>
+            <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>▼</span>
+          </div>
+
           {/* Currency Controller */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Display Currency:</label>
             <select 
               value={displayCurrency} 
               onChange={(e) => setDisplayCurrency(e.target.value)}
-              style={{ width: '100px', padding: '0.35rem 0.5rem', borderRadius: '6px', cursor: 'pointer' }}
+              className="currency-select"
+              style={{ width: '110px' }}
             >
               <option value="₹">INR (₹)</option>
               <option value="$">USD ($)</option>
@@ -344,351 +442,396 @@ function Dashboard({ token }) {
         </div>
       </div>
 
-      {/* Main Stats Grid */}
-      <div className="summary-grid">
-        <div className="summary-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <TrendingUp size={16} color="var(--accent-success)" /> Total Income
-          </span>
-          <div className="summary-value" style={{ color: 'var(--accent-success)' }}>
-            {displayCurrency}{totalIncomeConverted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-        </div>
+      {/* Main SaaS Responsive Grid */}
+      <div className="dashboard-layout-grid">
+        {/* Left Area */}
+        <div className="dashboard-left-col">
+          {/* Summary Cards Grid */}
+          <div className="summary-grid">
+            {/* Income Card */}
+            <div className="summary-card">
+              <div className="card-header-actions">
+                <span className="summary-label">Total Income</span>
+                <MoreHorizontal size={18} className="card-dots" />
+              </div>
+              <div className="summary-value" style={{ color: 'var(--text-primary)' }}>
+                {displayCurrency}{totalIncomeConverted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.25rem', 
+                fontSize: '0.75rem', 
+                fontWeight: 600,
+                marginTop: '0.75rem',
+                color: incomeChangePercent >= 0 ? '#10b981' : '#ef4444'
+              }}>
+                {incomeChangePercent >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                <span>{incomeChangePercent >= 0 ? '+' : ''}{incomeChangePercent.toFixed(1)}%</span>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>from last month</span>
+              </div>
+            </div>
 
-        <div className="summary-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <TrendingDown size={16} color="var(--accent-danger)" /> Total Expenses
-          </span>
-          <div className="summary-value" style={{ color: 'var(--accent-danger)' }}>
-            {displayCurrency}{totalExpensesConverted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-        </div>
+            {/* Expenses Card */}
+            <div className="summary-card">
+              <div className="card-header-actions">
+                <span className="summary-label">Total Expenses</span>
+                <MoreHorizontal size={18} className="card-dots" />
+              </div>
+              <div className="summary-value" style={{ color: 'var(--text-primary)' }}>
+                {displayCurrency}{totalExpensesConverted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.25rem', 
+                fontSize: '0.75rem', 
+                fontWeight: 600,
+                marginTop: '0.75rem',
+                color: expensesChangePercent <= 0 ? '#10b981' : '#ef4444' // lower expenses is good (green)
+              }}>
+                {expensesChangePercent >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                <span>{expensesChangePercent >= 0 ? '+' : ''}{expensesChangePercent.toFixed(1)}%</span>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>from last month</span>
+              </div>
+            </div>
 
-        <div className="summary-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span className="summary-label">Net Balance</span>
-          <div className="summary-value" style={{ color: netSavings >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)' }}>
-            {netSavings >= 0 ? '+' : ''}{displayCurrency}{netSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-        </div>
-
-        <div className="summary-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <span className="summary-label">Net Savings Rate</span>
-          <div className="summary-value">
-            {savingsRate.toFixed(1)}%
-            <div style={{ width: '100%', height: '4px', background: 'var(--border-color)', borderRadius: '2px', marginTop: '0.5rem', overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, savingsRate))}%`, background: 'var(--accent-primary)', transition: 'width 0.4s' }}></div>
+            {/* Savings Card */}
+            <div className="summary-card">
+              <div className="card-header-actions">
+                <span className="summary-label">Net Savings</span>
+                <MoreHorizontal size={18} className="card-dots" />
+              </div>
+              <div className="summary-value" style={{ color: netSavings >= 0 ? '#10b981' : '#ef4444' }}>
+                {netSavings >= 0 ? '+' : ''}{displayCurrency}{netSavings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.25rem', 
+                fontSize: '0.75rem', 
+                fontWeight: 600,
+                marginTop: '0.75rem',
+                color: savingsChangePercent >= 0 ? '#10b981' : '#ef4444'
+              }}>
+                {savingsChangePercent >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                <span>{savingsChangePercent >= 0 ? '+' : ''}{savingsChangePercent.toFixed(1)}%</span>
+                <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>from last month</span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Analytics Charts Row */}
-      <div className="summary-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-        {/* SVG Balance comparison Chart */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', marginBottom: 0 }}>
-          <h3 style={{ marginBottom: '1rem', fontWeight: 600, fontSize: '1rem' }}>Income vs Expense Balance</h3>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', flex: 1, padding: '1rem 0' }}>
-            <svg width={chartWidth} height={chartHeight + 30} style={{ overflow: 'visible' }}>
-              {/* Gradients */}
-              <defs>
-                <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#34d399" />
-                  <stop offset="100%" stopColor="#10b981" />
-                </linearGradient>
-                <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f87171" />
-                  <stop offset="100%" stopColor="#ef4444" />
-                </linearGradient>
-              </defs>
-
-              {/* Grid Lines */}
-              <line x1="0" y1={chartHeight} x2={chartWidth} y2={chartHeight} stroke="var(--border-color)" strokeWidth="1" />
-              <line x1="0" y1={chartHeight / 2} x2={chartWidth} y2={chartHeight / 2} stroke="var(--border-color)" strokeWidth="1" strokeDasharray="4" opacity="0.5" />
-
-              {/* Income Bar */}
-              <rect
-                x="40"
-                y={chartHeight - incomeBarHeight}
-                width="50"
-                height={incomeBarHeight}
-                fill="url(#incomeGrad)"
-                rx="6"
-                style={{ transition: 'height 0.4s, y 0.4s' }}
-              />
-              <text x="65" y={chartHeight - incomeBarHeight - 8} textAnchor="middle" fill="var(--text-primary)" fontSize="11" fontWeight="600">
-                {displayCurrency}{totalIncomeConverted.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </text>
-              <text x="65" y={chartHeight + 18} textAnchor="middle" fill="var(--text-secondary)" fontSize="11" fontWeight="500">
-                Income
-              </text>
-
-              {/* Expense Bar */}
-              <rect
-                x="150"
-                y={chartHeight - expenseBarHeight}
-                width="50"
-                height={expenseBarHeight}
-                fill="url(#expenseGrad)"
-                rx="6"
-                style={{ transition: 'height 0.4s, y 0.4s' }}
-              />
-              <text x="175" y={chartHeight - expenseBarHeight - 8} textAnchor="middle" fill="var(--text-primary)" fontSize="11" fontWeight="600">
-                {displayCurrency}{totalExpensesConverted.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </text>
-              <text x="175" y={chartHeight + 18} textAnchor="middle" fill="var(--text-secondary)" fontSize="11" fontWeight="500">
-                Expense
-              </text>
-            </svg>
-          </div>
-        </div>
-
-        {/* SVG Donut Category Chart */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', marginBottom: 0 }}>
-          <h3 style={{ marginBottom: '1rem', fontWeight: 600, fontSize: '1rem' }}>Category Expenses Breakdown</h3>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', gap: '1rem', flex: 1 }}>
-            {donutData.length > 0 ? (
-              <>
-                <svg width="120" height="120" viewBox="0 0 120 120" style={{ overflow: 'visible' }}>
-                  {donutSlices}
-                  {/* Center Hole text */}
-                  <circle cx="60" cy="60" r="32" fill="var(--surface-color)" />
-                  <text x="60" y="58" textAnchor="middle" fill="var(--text-secondary)" fontSize="8" fontWeight="500">
-                    TOTAL SPENT
-                  </text>
-                  <text x="60" y="72" textAnchor="middle" fill="var(--text-primary)" fontSize="10" fontWeight="700">
-                    {displayCurrency}{totalExpensesConverted.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </text>
-                </svg>
-                
-                {/* Legend list */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem' }}>
-                  {donutData.map((d, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: d.color }}></div>
-                      <span style={{ textTransform: 'capitalize', fontWeight: 500 }}>{d.name}</span>
-                      <span style={{ color: 'var(--text-secondary)' }}>
-                        ({((d.value / totalDonutValue) * 100).toFixed(0)}%)
-                      </span>
+          {/* Cards Rows */}
+          <div className="dashboard-sub-grid">
+            {/* Recent Transactions List */}
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="card-header-actions">
+                <h3 className="card-title">Recent Transactions</h3>
+                <MoreHorizontal size={18} className="card-dots" />
+              </div>
+              {expenses.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {expenses.slice(0, 5).map(expense => (
+                    <div key={expense.id} className="transaction-row-item">
+                      <div className="transaction-icon-box" style={{ background: getCategoryBgColor(expense.category) }}>
+                        {getCategoryIcon(expense.category)}
+                      </div>
+                      <div className="transaction-details">
+                        <span className="transaction-desc">{expense.description}</span>
+                        <span className="transaction-date">{new Date(expense.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      </div>
+                      <div className="transaction-amount-badge">
+                        <span className="transaction-amount" style={{ color: 'var(--text-primary)' }}>
+                          -{expense.currency}{expense.amount.toFixed(2)}
+                        </span>
+                        <span 
+                          className="transaction-badge" 
+                          style={{
+                            backgroundColor: PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.bg || 'rgba(100, 116, 139, 0.08)',
+                            color: PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.color || 'var(--text-secondary)',
+                            border: `1px solid ${PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.border || 'rgba(100, 116, 139, 0.2)'}`
+                          }}
+                        >
+                          {expense.paymentMode || 'Cash'}
+                        </span>
+                      </div>
+                      <button className="delete-row-btn" onClick={() => deleteExpense(expense.id)} title="Delete transaction">
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   ))}
                 </div>
-              </>
-            ) : (
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', padding: '2rem 0', width: '100%' }}>
-                Log expenses to see category breakdowns.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem', color: 'var(--text-secondary)' }}>
+                  <Wallet size={32} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
+                  <p style={{ fontSize: '0.85rem' }}>No expenses logged yet.</p>
+                </div>
+              )}
+            </div>
 
-      {/* Category Budgets & Forms Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginTop: '2rem' }}>
-        {/* Category Budget limits tracker */}
-        <div className="card" style={{ marginBottom: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-            <h3 style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>Monthly Budget Targets</h3>
-            {isEditingBudgets ? (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button 
-                  onClick={saveBudgets} 
-                  style={{ padding: '4px 10px', fontSize: '0.8rem', background: 'var(--accent-success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
-                >
-                  Save
-                </button>
-                <button 
-                  onClick={() => { setTempBudgets(customBudgets); setIsEditingBudgets(false); }} 
-                  style={{ padding: '4px 10px', fontSize: '0.8rem', background: 'var(--border-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
+            {/* Income vs Expenses Bar Chart */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '100%', marginBottom: 0 }}>
+              <div className="card-header-actions">
+                <h3 className="card-title">Income vs Expenses Balance</h3>
+                <MoreHorizontal size={18} className="card-dots" />
               </div>
-            ) : (
-              <button 
-                onClick={() => setIsEditingBudgets(true)} 
-                style={{ padding: '4px 10px', fontSize: '0.8rem', background: 'transparent', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}
-              >
-                Edit Limits
-              </button>
-            )}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', flex: 1, padding: '1.25rem 0' }}>
+                <svg width={chartWidth} height={chartHeight + 30} style={{ overflow: 'visible' }}>
+                  {/* Grid Lines */}
+                  <line x1="0" y1={chartHeight} x2={chartWidth} y2={chartHeight} stroke="var(--border-color)" strokeWidth="1.5" />
+                  <line x1="0" y1={chartHeight / 2} x2={chartWidth} y2={chartHeight / 2} stroke="var(--border-color)" strokeWidth="1" strokeDasharray="4" opacity="0.4" />
+                  <line x1="0" y1={chartHeight / 4} x2={chartWidth} y2={chartHeight / 4} stroke="var(--border-color)" strokeWidth="1" strokeDasharray="4" opacity="0.4" />
+                  <line x1="0" y1={(chartHeight * 3) / 4} x2={chartWidth} y2={(chartHeight * 3) / 4} stroke="var(--border-color)" strokeWidth="1" strokeDasharray="4" opacity="0.4" />
+
+                  {/* Income Capsule Track */}
+                  <rect x="45" y="0" width="30" height={chartHeight} fill="var(--bg-color)" rx="8" />
+                  {/* Income Bar (Deep Forest Green) */}
+                  <rect
+                    x="45"
+                    y={chartHeight - incomeBarHeight}
+                    width="30"
+                    height={incomeBarHeight}
+                    fill="#1a4d2e"
+                    rx="8"
+                    style={{ transition: 'height 0.4s, y 0.4s' }}
+                  />
+                  <text x="60" y={chartHeight - incomeBarHeight - 10} textAnchor="middle" fill="var(--text-primary)" fontSize="11" fontWeight="700">
+                    {displayCurrency}{totalIncomeConverted.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </text>
+                  <text x="60" y={chartHeight + 20} textAnchor="middle" fill="var(--text-secondary)" fontSize="11" fontWeight="600">
+                    Income
+                  </text>
+
+                  {/* Expense Capsule Track */}
+                  <rect x="145" y="0" width="30" height={chartHeight} fill="var(--bg-color)" rx="8" />
+                  {/* Expense Bar (Lime Green) */}
+                  <rect
+                    x="145"
+                    y={chartHeight - expenseBarHeight}
+                    width="30"
+                    height={expenseBarHeight}
+                    fill="#a8e63d"
+                    rx="8"
+                    style={{ transition: 'height 0.4s, y 0.4s' }}
+                  />
+                  <text x="160" y={chartHeight - expenseBarHeight - 10} textAnchor="middle" fill="var(--text-primary)" fontSize="11" fontWeight="700">
+                    {displayCurrency}{totalExpensesConverted.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </text>
+                  <text x="160" y={chartHeight + 20} textAnchor="middle" fill="var(--text-secondary)" fontSize="11" fontWeight="600">
+                    Expense
+                  </text>
+                </svg>
+              </div>
+            </div>
           </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {budgetList.map(budget => (
-              <div key={budget.category}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: 500 }}>
-                  <span style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: CATEGORY_COLORS[budget.category] }}></span>
-                    {budget.category}
-                  </span>
-                  {isEditingBudgets ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                        <strong style={{ color: 'var(--text-primary)' }}>{displayCurrency}{budget.spent.toFixed(0)}</strong> / ₹
+
+          {/* Budgets & Form Row */}
+          <div className="dashboard-sub-grid">
+            {/* Category Targets */}
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="card-header-actions">
+                <h3 className="card-title">Monthly Budget Targets</h3>
+                {isEditingBudgets ? (
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      onClick={saveBudgets} 
+                      className="primary-btn"
+                      style={{ height: '28px', padding: '0 8px', fontSize: '0.75rem', borderRadius: '6px', fontWeight: 600 }}
+                    >
+                      Save
+                    </button>
+                    <button 
+                      onClick={() => { setTempBudgets(customBudgets); setIsEditingBudgets(false); }} 
+                      style={{ padding: '0 8px', height: '28px', fontSize: '0.75rem', background: 'var(--border-color)', color: 'var(--text-primary)', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setIsEditingBudgets(true)} 
+                    style={{ padding: '4px 10px', fontSize: '0.75rem', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', borderRadius: '20px', cursor: 'pointer', fontWeight: 500 }}
+                  >
+                    Edit Limits
+                  </button>
+                )}
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                {budgetList.map(budget => (
+                  <div key={budget.category}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem', fontWeight: 500 }}>
+                      <span style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: CATEGORY_COLORS[budget.category] }}></span>
+                        {budget.category}
                       </span>
-                      <input 
-                        type="number" 
-                        value={tempBudgets[budget.category] === undefined ? '' : tempBudgets[budget.category]} 
-                        onChange={(e) => {
-                          const val = e.target.value === '' ? '' : parseFloat(e.target.value);
-                          setTempBudgets(prev => ({ ...prev, [budget.category]: val }));
-                        }}
-                        style={{ width: '70px', padding: '2px 4px', fontSize: '0.85rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
-                        min="0"
-                      />
+                      {isEditingBudgets ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                            <strong style={{ color: 'var(--text-primary)' }}>{displayCurrency}{budget.spent.toFixed(0)}</strong> / ₹
+                          </span>
+                          <input 
+                            type="number" 
+                            value={tempBudgets[budget.category] === undefined ? '' : tempBudgets[budget.category]} 
+                            onChange={(e) => {
+                              const val = e.target.value === '' ? '' : parseFloat(e.target.value);
+                              setTempBudgets(prev => ({ ...prev, [budget.category]: val }));
+                            }}
+                            style={{ width: '60px', padding: '2px 4px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--surface-color)', color: 'var(--text-primary)' }}
+                            min="0"
+                          />
+                        </div>
+                      ) : (
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                          <strong style={{ color: 'var(--text-primary)' }}>{displayCurrency}{budget.spent.toFixed(0)}</strong> / {displayCurrency}{budget.limit.toFixed(0)}
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    <span style={{ color: 'var(--text-secondary)' }}>
-                      <strong style={{ color: 'var(--text-primary)' }}>{displayCurrency}{budget.spent.toFixed(0)}</strong> / {displayCurrency}{budget.limit.toFixed(0)}
-                    </span>
-                  )}
-                </div>
-                <div style={{ width: '100%', height: '8px', background: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div 
-                    style={{ 
-                      height: '100%', 
-                      width: `${Math.min(100, budget.ratio)}%`, 
-                      background: budget.color, 
-                      transition: 'width 0.4s, background-color 0.4s' 
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick Add Expense */}
-        <div className="card" style={{ marginBottom: 0 }}>
-          <h3 style={{ marginBottom: '1rem', fontWeight: 600, fontSize: '1rem' }}>Quick Add Expense</h3>
-          <form className="form-grid" onSubmit={handleExpenseSubmit} style={{ gridTemplateColumns: '1fr' }}>
-            <div className="form-group">
-              <label>Description</label>
-              <input type="text" name="description" value={formData.description} onChange={handleInputChange} placeholder="e.g. Starbucks Coffee" required />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div className="form-group">
-                <label>Amount</label>
-                <div className="amount-currency-group">
-                  <select name="currency" value={formData.currency} onChange={handleInputChange} style={{ width: '70px' }}>
-                    <option value="$">$</option>
-                    <option value="€">€</option>
-                    <option value="£">£</option>
-                    <option value="₹">₹</option>
-                    <option value="¥">¥</option>
-                  </select>
-                  <input type="number" name="amount" value={formData.amount} onChange={handleInputChange} step="0.01" min="0" required style={{ flex: 1 }} />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Category</label>
-                <select name="category" value={formData.category} onChange={handleInputChange}>
-                  <option value="food">Food</option>
-                  <option value="travel">Travel</option>
-                  <option value="shopping">Shopping</option>
-                  <option value="entertainment">Entertainment</option>
-                  <option value="utilities">Utilities</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div className="form-group">
-                <label>Date</label>
-                <input type="date" name="date" value={formData.date} onChange={handleInputChange} required />
-              </div>
-              <div className="form-group">
-                <label>Mode of Transaction</label>
-                <select name="paymentMode" value={formData.paymentMode} onChange={handleInputChange}>
-                  <option value="Google Pay">Google Pay</option>
-                  <option value="PhonePe">PhonePe</option>
-                  <option value="Paytm">Paytm</option>
-                  <option value="Cash">Cash</option>
-                  <option value="Card">Card</option>
-                  <option value="Net Banking">Net Banking</option>
-                </select>
-              </div>
-            </div>
-            <div style={{ marginTop: '1rem' }}>
-              <button type="submit" className="primary-btn" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}><Plus size={18}/> Add Expense</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* History log card */}
-      <div className="card" style={{ marginTop: '2rem' }}>
-        <h3 style={{ marginBottom: '1rem', fontWeight: 600 }}>Recent Expenses</h3>
-        {expenses.length > 0 ? (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Category</th>
-                  <th>Mode</th>
-                  <th style={{ textAlign: 'right' }}>Amount</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {expenses.slice(0, 10).map(expense => (
-                  <tr key={expense.id}>
-                    <td style={{ color: 'var(--text-secondary)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Calendar size={14} />
-                        {new Date(expense.date).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td style={{ fontWeight: 500 }}>{expense.description}</td>
-                    <td>
-                      <span 
+                    <div style={{ width: '100%', height: '6px', background: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div 
                         style={{ 
-                          fontSize: '0.8rem', 
-                          color: '#fff',
-                          background: CATEGORY_COLORS[expense.category] || '#64748b', 
-                          padding: '4px 8px', 
-                          borderRadius: '4px', 
-                          textTransform: 'capitalize',
-                          fontWeight: 500
+                          height: '100%', 
+                          width: `${Math.min(100, budget.ratio)}%`, 
+                          background: budget.ratio > 100 ? 'var(--accent-danger)' : budget.ratio > 80 ? 'orange' : '#1a4d2e', 
+                          transition: 'width 0.4s, background-color 0.4s' 
                         }}
-                      >
-                        {expense.category}
-                      </span>
-                    </td>
-                    <td>
-                      <span 
-                        style={{ 
-                          fontSize: '0.75rem', 
-                          padding: '3px 8px', 
-                          borderRadius: '4px', 
-                          fontWeight: 600,
-                          backgroundColor: PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.bg || 'rgba(100, 116, 139, 0.08)',
-                          color: PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.color || 'var(--text-secondary)',
-                          border: `1px solid ${PAYMENT_MODE_COLORS[expense.paymentMode || 'Cash']?.border || 'rgba(100, 116, 139, 0.2)'}`
-                        }}
-                      >
-                        {expense.paymentMode || 'Cash'}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>
-                      {expense.currency}{expense.amount.toFixed(2)}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <button className="delete-btn" onClick={() => deleteExpense(expense.id)}><Trash2 size={16} /></button>
-                    </td>
-                  </tr>
+                      ></div>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+
+            {/* Quick Add Expense Form */}
+            <div className="card" style={{ marginBottom: 0 }}>
+              <div className="card-header-actions">
+                <h3 className="card-title">Quick Add Expense</h3>
+                <MoreHorizontal size={18} className="card-dots" />
+              </div>
+              <form className="form-grid" onSubmit={handleExpenseSubmit} style={{ gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                <div className="form-group">
+                  <label style={{ fontSize: '0.75rem' }}>Description</label>
+                  <input type="text" name="description" value={formData.description} onChange={handleInputChange} placeholder="e.g. Starbucks Coffee" required style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '0.75rem' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem' }}>Amount</label>
+                    <div className="amount-currency-group">
+                      <select name="currency" value={formData.currency} onChange={handleInputChange} style={{ width: '60px', padding: '0.5rem 0.25rem', fontSize: '0.85rem' }}>
+                        <option value="$">$</option>
+                        <option value="€">€</option>
+                        <option value="£">£</option>
+                        <option value="₹">₹</option>
+                        <option value="¥">¥</option>
+                      </select>
+                      <input type="number" name="amount" value={formData.amount} onChange={handleInputChange} step="0.01" min="0" required style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem' }}>Category</label>
+                    <select name="category" value={formData.category} onChange={handleInputChange} style={{ padding: '0.5rem 0.5rem', fontSize: '0.85rem' }}>
+                      <option value="food">Food</option>
+                      <option value="travel">Travel</option>
+                      <option value="shopping">Shopping</option>
+                      <option value="entertainment">Entertainment</option>
+                      <option value="utilities">Utilities</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem' }}>Date</label>
+                    <input type="date" name="date" value={formData.date} onChange={handleInputChange} required style={{ padding: '0.45rem 0.5rem', fontSize: '0.85rem' }} />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.75rem' }}>Mode</label>
+                    <select name="paymentMode" value={formData.paymentMode} onChange={handleInputChange} style={{ padding: '0.5rem 0.5rem', fontSize: '0.85rem' }}>
+                      <option value="Google Pay">Google Pay</option>
+                      <option value="PhonePe">PhonePe</option>
+                      <option value="Paytm">Paytm</option>
+                      <option value="Cash">Cash</option>
+                      <option value="Card">Card</option>
+                      <option value="Net Banking">Net Banking</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <button type="submit" className="primary-btn" style={{ width: '100%', height: '36px', borderRadius: '20px', fontSize: '0.85rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                    <Plus size={16}/> Add Expense
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        ) : (
-          <div className="empty-state">
-            <Wallet size={32} className="empty-icon" />
-            <p>No expenses logged yet.</p>
+        </div>
+
+        {/* Right Sidebar Area */}
+        <div className="dashboard-right-col">
+          {/* Donut Chart Panel */}
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', height: 'auto', marginBottom: 0 }}>
+            <div className="card-header-actions">
+              <h3 className="card-title">Category Breakdown</h3>
+              <MoreHorizontal size={18} className="card-dots" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', padding: '1rem 0' }}>
+              {donutData.length > 0 ? (
+                <>
+                  <svg width="150" height="150" viewBox="0 0 120 120" style={{ overflow: 'visible' }}>
+                    {donutSlices}
+                    {/* Center hole stats */}
+                    <circle cx="60" cy="60" r="32" fill="var(--surface-color)" />
+                    <text x="60" y="52" textAnchor="middle" fill="var(--text-secondary)" fontSize="7" fontWeight="600" style={{ letterSpacing: '0.05em' }}>
+                      TOP CATEGORY
+                    </text>
+                    <text x="60" y="67" textAnchor="middle" fill="var(--text-primary)" fontSize="11" fontWeight="800" style={{ textTransform: 'uppercase' }}>
+                      {biggestCategory.name}
+                    </text>
+                    <text x="60" y="79" textAnchor="middle" fill="var(--accent-danger)" fontSize="8" fontWeight="700">
+                      {biggestCategory.percent.toFixed(0)}% of spent
+                    </text>
+                  </svg>
+                  
+                  {/* Legend list */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', width: '100%', padding: '0 0.5rem' }}>
+                    {donutData.map((d, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: d.color }}></div>
+                          <span style={{ textTransform: 'capitalize', fontWeight: 500, color: 'var(--text-primary)' }}>{d.name}</span>
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          {displayCurrency}{d.value.toFixed(0)} <span style={{ fontWeight: 400, fontSize: '0.75rem' }}>({((d.value / totalDonutValue) * 100).toFixed(0)}%)</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', textAlign: 'center', padding: '2rem 0', width: '100%' }}>
+                  Log expenses to see category breakdowns.
+                </div>
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Dark Green Motivation/Update Card */}
+          <div className="update-card">
+            <span className="update-card-badge">Update</span>
+            <h4 className="update-card-title">Expense Summary</h4>
+            <p className="update-card-desc">
+              You've logged <strong>{thisMonthExpensesCount}</strong> expenses this month.
+              {thisMonthExpenses > 0 ? (
+                <> Total spent this month is <strong>{displayCurrency}{thisMonthExpenses.toFixed(0)}</strong>.</>
+              ) : (
+                <> Start logging your expenses to stay on top of your financial budget!</>
+              )}
+            </p>
+            <div className="update-card-link" onClick={() => window.location.pathname = '/archive'}>
+              See Statistics &gt;
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
