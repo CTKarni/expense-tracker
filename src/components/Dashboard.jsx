@@ -3,7 +3,7 @@ import { Plus, Trash2, Calendar, ShoppingBag, CreditCard, Wallet, TrendingUp, Tr
 import ModernDatePicker from './ModernDatePicker';
 import { generateUUID } from '../utils/uuid';
 
-const API_URL = `http://${window.location.hostname}:3001`;
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001`;
 
 // Default budget limits in INR (₹) base (default to 1000 INR as requested)
 const DEFAULT_BUDGETS = {

@@ -3,7 +3,7 @@ import { Plus, Trash2, Check, RotateCcw, User, Calendar, Coins, AlertCircle, Mor
 import ModernDatePicker from './ModernDatePicker';
 import { generateUUID } from '../utils/uuid';
 
-const API_URL = `http://${window.location.hostname}:3001`;
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001`;
 
 function Debts({ token }) {
   const [debts, setDebts] = useState([]);

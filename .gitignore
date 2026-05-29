@@ -11,6 +11,10 @@ server/database.sqlite
 server/archive.sqlite
 server/serviceAccountKey.json
 
+# Local env files
+.env.local
+.env.*.local
+
 # IDEs and OS files
 .DS_Store
 .vscode/
