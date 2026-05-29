@@ -15,6 +15,7 @@ function Debts({ token }) {
     date: new Date().toISOString().split('T')[0],
     type: 'lent' // 'lent' or 'borrowed'
   });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchDebts();
@@ -35,6 +36,7 @@ function Debts({ token }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     if (!formData.friendName || !formData.amount) return;
 
     const bodyData = {
@@ -62,9 +64,13 @@ function Debts({ token }) {
         if (res.ok) {
           setDebts(debts.map(d => d.id === editingId ? { ...d, ...updatedDebt } : d));
           resetForm();
+        } else {
+          const errData = await res.json();
+          setError(errData.error || 'Failed to update record');
         }
       } catch (err) {
         console.error(err);
+        setError('Connection error: Failed to reach the server. Please check if backend is running.');
       }
     } else {
       // Create new debt
@@ -83,9 +89,13 @@ function Debts({ token }) {
         if (res.ok) {
           setDebts([newDebt, ...debts]);
           resetForm();
+        } else {
+          const errData = await res.json();
+          setError(errData.error || 'Failed to add record');
         }
       } catch (err) {
         console.error(err);
+        setError('Connection error: Failed to reach the server. Please check if backend is running.');
       }
     }
   };
@@ -257,6 +267,24 @@ function Debts({ token }) {
           <MoreHorizontal size={18} className="card-dots" />
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
+          {error && (
+            <div style={{
+              gridColumn: 'span 2',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              color: 'var(--accent-danger)',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              width: '100%'
+            }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label>Friend's Name</label>
             <input 

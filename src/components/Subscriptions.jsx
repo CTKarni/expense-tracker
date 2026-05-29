@@ -105,6 +105,7 @@ function Subscriptions({ token }) {
     currency: 'INR',
     billingDay: 1
   });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchSubscriptions();
@@ -149,6 +150,7 @@ function Subscriptions({ token }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     if (!formData.amount) return;
     
     const finalBrand = formData.brand === 'other' ? (formData.customBrand || 'Other') : formData.brand;
@@ -170,9 +172,13 @@ function Subscriptions({ token }) {
         if (res.ok) {
           setSubscriptions(subscriptions.map(s => s.id === editingId ? { ...s, ...updatedSub } : s));
           resetForm();
+        } else {
+          const errData = await res.json();
+          setError(errData.error || 'Failed to update subscription');
         }
       } catch (err) {
         console.error(err);
+        setError('Connection error: Failed to reach the server. Please check if backend is running.');
       }
     } else {
       // CREATE
@@ -192,9 +198,13 @@ function Subscriptions({ token }) {
         if (res.ok) {
           setSubscriptions([...subscriptions, newSub]);
           resetForm();
+        } else {
+          const errData = await res.json();
+          setError(errData.error || 'Failed to add subscription');
         }
       } catch (err) {
         console.error(err);
+        setError('Connection error: Failed to reach the server. Please check if backend is running.');
       }
     }
   };
@@ -265,6 +275,24 @@ function Subscriptions({ token }) {
           <MoreHorizontal size={18} className="card-dots" />
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
+          {error && (
+            <div style={{
+              gridColumn: 'span 2',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              color: 'var(--accent-danger)',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              width: '100%'
+            }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
           <div className="form-group">
             <label>Brand</label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>

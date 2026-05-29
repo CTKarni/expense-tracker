@@ -31,6 +31,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Request logger middleware
+app.use((req, res, next) => {
+  console.log(`[API REQUEST] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+  next();
+});
+
 const db = new sqlite3.Database(join(__dirname, 'database.sqlite'), (err) => {
   if (err) console.error('Database connection error:', err);
   else console.log('Connected to SQLite database');

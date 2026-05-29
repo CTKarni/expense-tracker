@@ -13,6 +13,7 @@ function Income({ token }) {
     currency: '₹',
     date: new Date().toISOString().split('T')[0]
   });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchIncomes();
@@ -38,6 +39,7 @@ function Income({ token }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     if (!formData.amount || !formData.date) return;
 
     const finalSource = formData.source === 'other' ? (formData.customSource || 'Other') : formData.source;
@@ -62,9 +64,13 @@ function Income({ token }) {
       if (res.ok) {
         setIncomes(prev => [newIncome, ...prev].sort((a, b) => new Date(b.date) - new Date(a.date)));
         setFormData(prev => ({ ...prev, customSource: '', amount: '' }));
+      } else {
+        const errData = await res.json();
+        setError(errData.error || 'Failed to add income');
       }
     } catch (err) {
       console.error('Error adding income', err);
+      setError('Connection error: Failed to reach the server. Please check if backend is running.');
     }
   };
 
@@ -116,6 +122,24 @@ function Income({ token }) {
           <MoreHorizontal size={18} className="card-dots" />
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
+          {error && (
+            <div style={{
+              gridColumn: 'span 2',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              color: 'var(--accent-danger)',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              width: '100%'
+            }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label>Source Type</label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>

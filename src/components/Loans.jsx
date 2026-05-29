@@ -14,6 +14,7 @@ function Loans({ token }) {
     currency: '₹',
     endDate: new Date().toISOString().split('T')[0]
   });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchLoans();
@@ -44,6 +45,7 @@ function Loans({ token }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     if (!formData.name || !formData.totalAmount) return;
     
     const newLoan = {
@@ -62,9 +64,13 @@ function Loans({ token }) {
       if (res.ok) {
         setLoans([...loans, newLoan]);
         setFormData({ ...formData, name: '', totalAmount: '', emiAmount: '' });
+      } else {
+        const errData = await res.json();
+        setError(errData.error || 'Failed to add loan');
       }
     } catch (err) {
       console.error(err);
+      setError('Connection error: Failed to reach the server. Please check if backend is running.');
     }
   };
 
@@ -113,6 +119,24 @@ function Loans({ token }) {
           <MoreHorizontal size={18} className="card-dots" />
         </div>
         <form className="form-grid" onSubmit={handleSubmit}>
+          {error && (
+            <div style={{
+              gridColumn: 'span 2',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              color: 'var(--accent-danger)',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              width: '100%'
+            }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label>Loan Name</label>
             <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. Tesla Model 3 Auto Loan" required />

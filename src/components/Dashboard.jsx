@@ -53,6 +53,7 @@ function Dashboard({ token }) {
     paymentMode: 'Google Pay',
     date: new Date().toISOString().split('T')[0]
   });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchExpenses();
@@ -149,6 +150,7 @@ function Dashboard({ token }) {
 
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     if (!formData.description || !formData.amount || !formData.date) return;
     
     const newExpense = {
@@ -169,9 +171,13 @@ function Dashboard({ token }) {
       if (res.ok) {
         setExpenses(prev => [newExpense, ...prev].sort((a, b) => new Date(b.date) - new Date(a.date)));
         setFormData(prev => ({ ...prev, description: '', amount: '', paymentMode: 'Google Pay' }));
+      } else {
+        const errData = await res.json();
+        setError(errData.error || 'Failed to add expense');
       }
     } catch (err) {
       console.error('Error adding expense', err);
+      setError('Connection error: Failed to reach the server. Please check if backend is running.');
     }
   };
 
@@ -710,6 +716,23 @@ function Dashboard({ token }) {
                 <MoreHorizontal size={18} className="card-dots" />
               </div>
               <form className="form-grid" onSubmit={handleExpenseSubmit} style={{ gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                {error && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    color: 'var(--accent-danger)',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    width: '100%'
+                  }}>
+                    <span>⚠️</span>
+                    <span>{error}</span>
+                  </div>
+                )}
                 <div className="form-group">
                   <label style={{ fontSize: '0.75rem' }}>Description</label>
                   <input type="text" name="description" value={formData.description} onChange={handleInputChange} placeholder="e.g. Starbucks Coffee" required style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} />
