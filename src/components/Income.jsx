@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Calendar, Wallet, MoreHorizontal } from 'lucide-react';
+import ModernDatePicker from './ModernDatePicker';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = `http://${window.location.hostname}:3001`;
 
 function Income({ token }) {
   const [incomes, setIncomes] = useState([]);
@@ -151,7 +152,10 @@ function Income({ token }) {
           </div>
           <div className="form-group">
             <label>Date Received</label>
-            <input type="date" name="date" value={formData.date} onChange={handleInputChange} required />
+            <ModernDatePicker 
+              value={formData.date}
+              onChange={date => setFormData(prev => ({ ...prev, date }))}
+            />
           </div>
           <div className="form-group">
             <button type="submit" className="primary-btn"><Plus size={18}/> Log Income</button>

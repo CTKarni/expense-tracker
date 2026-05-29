@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Landmark, MoreHorizontal } from 'lucide-react';
+import ModernDatePicker from './ModernDatePicker';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = `http://${window.location.hostname}:3001`;
 
 function Loans({ token }) {
   const [loans, setLoans] = useState([]);
@@ -134,7 +135,10 @@ function Loans({ token }) {
           </div>
           <div className="form-group">
             <label>End Date</label>
-            <input type="date" value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} required />
+            <ModernDatePicker 
+              value={formData.endDate}
+              onChange={date => setFormData(prev => ({ ...prev, endDate: date }))}
+            />
           </div>
           <div className="form-group">
             <button type="submit" className="primary-btn"><Plus size={18}/> Add Loan</button>

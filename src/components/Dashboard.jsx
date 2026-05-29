@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Calendar, ShoppingBag, CreditCard, Wallet, TrendingUp, TrendingDown, DollarSign, Archive, Utensils, Car, Clapperboard, FileText, HelpCircle, ArrowUpRight, ArrowDownRight, MoreHorizontal } from 'lucide-react';
+import ModernDatePicker from './ModernDatePicker';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = `http://${window.location.hostname}:3001`;
 
 // Default budget limits in INR (₹) base (default to 1000 INR as requested)
 const DEFAULT_BUDGETS = {
@@ -713,7 +714,7 @@ function Dashboard({ token }) {
                   <label style={{ fontSize: '0.75rem' }}>Description</label>
                   <input type="text" name="description" value={formData.description} onChange={handleInputChange} placeholder="e.g. Starbucks Coffee" required style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '0.75rem' }}>
+                <div className="form-row-2col-split">
                   <div className="form-group">
                     <label style={{ fontSize: '0.75rem' }}>Amount</label>
                     <div className="amount-currency-group">
@@ -739,10 +740,13 @@ function Dashboard({ token }) {
                     </select>
                   </div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-row-2col">
                   <div className="form-group">
                     <label style={{ fontSize: '0.75rem' }}>Date</label>
-                    <input type="date" name="date" value={formData.date} onChange={handleInputChange} required style={{ padding: '0.45rem 0.5rem', fontSize: '0.85rem' }} />
+                    <ModernDatePicker
+                      value={formData.date}
+                      onChange={date => setFormData(prev => ({ ...prev, date }))}
+                    />
                   </div>
                   <div className="form-group">
                     <label style={{ fontSize: '0.75rem' }}>Mode</label>

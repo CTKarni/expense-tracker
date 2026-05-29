@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, CalendarClock, Pencil, X, MoreHorizontal } from 'lucide-react';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = `http://${window.location.hostname}:3001`;
 
 // Extensible domain mapping for popular services
 const BRAND_DOMAINS = {

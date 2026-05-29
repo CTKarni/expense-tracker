@@ -1000,3 +1000,34 @@ td {
   animation: spin 1.2s linear infinite;
 }
 
+/* Custom Responsive Form Rows to prevent overlapping */
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.form-row-2col-split {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 0.75rem;
+}
+
+/* Calendar dropdown responsiveness */
+.calendar-dropdown {
+  max-width: calc(100vw - 32px);
+}
+
+@media (max-width: 480px) {
+  .form-row-2col,
+  .form-row-2col-split {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .calendar-dropdown {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
