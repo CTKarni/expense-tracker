@@ -37,14 +37,17 @@ app.use((req, res, next) => {
   next();
 });
 
-const db = new sqlite3.Database(join(__dirname, 'database.sqlite'), (err) => {
+const databasePath = process.env.DATABASE_PATH || join(__dirname, 'database.sqlite');
+const archiveDatabasePath = process.env.ARCHIVE_DATABASE_PATH || join(__dirname, 'archive.sqlite');
+
+const db = new sqlite3.Database(databasePath, (err) => {
   if (err) console.error('Database connection error:', err);
-  else console.log('Connected to SQLite database');
+  else console.log(`Connected to SQLite database at ${databasePath}`);
 });
 
-const archiveDb = new sqlite3.Database(join(__dirname, 'archive.sqlite'), (err) => {
+const archiveDb = new sqlite3.Database(archiveDatabasePath, (err) => {
   if (err) console.error('Archive database connection error:', err);
-  else console.log('Connected to SQLite archive database');
+  else console.log(`Connected to SQLite archive database at ${archiveDatabasePath}`);
 });
 
 // Initialize Archive DB schema
