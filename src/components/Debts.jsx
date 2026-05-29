@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Check, RotateCcw, User, Calendar, Coins, AlertCircle, MoreHorizontal } from 'lucide-react';
 import ModernDatePicker from './ModernDatePicker';
+import { generateUUID } from '../utils/uuid';
 
 const API_URL = `http://${window.location.hostname}:3001`;
 
@@ -70,12 +71,12 @@ function Debts({ token }) {
         }
       } catch (err) {
         console.error(err);
-        setError('Connection error: Failed to reach the server. Please check if backend is running.');
+        setError(`Connection error: Failed to reach the server. ${err.message || ''}`);
       }
     } else {
       // Create new debt
       const newDebt = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         ...bodyData,
         status: 'pending'
       };
@@ -95,7 +96,7 @@ function Debts({ token }) {
         }
       } catch (err) {
         console.error(err);
-        setError('Connection error: Failed to reach the server. Please check if backend is running.');
+        setError(`Connection error: Failed to reach the server. ${err.message || ''}`);
       }
     }
   };

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Calendar, Wallet, MoreHorizontal } from 'lucide-react';
 import ModernDatePicker from './ModernDatePicker';
+import { generateUUID } from '../utils/uuid';
 
 const API_URL = `http://${window.location.hostname}:3001`;
 
@@ -45,7 +46,7 @@ function Income({ token }) {
     const finalSource = formData.source === 'other' ? (formData.customSource || 'Other') : formData.source;
 
     const newIncome = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       source: finalSource,
       amount: parseFloat(formData.amount),
       currency: formData.currency,
@@ -70,7 +71,7 @@ function Income({ token }) {
       }
     } catch (err) {
       console.error('Error adding income', err);
-      setError('Connection error: Failed to reach the server. Please check if backend is running.');
+      setError(`Connection error: Failed to reach the server. ${err.message || ''}`);
     }
   };
 

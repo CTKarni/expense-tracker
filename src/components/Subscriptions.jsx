@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, CalendarClock, Pencil, X, MoreHorizontal } from 'lucide-react';
+import { generateUUID } from '../utils/uuid';
 
 const API_URL = `http://${window.location.hostname}:3001`;
 
@@ -178,12 +179,12 @@ function Subscriptions({ token }) {
         }
       } catch (err) {
         console.error(err);
-        setError('Connection error: Failed to reach the server. Please check if backend is running.');
+        setError(`Connection error: Failed to reach the server. ${err.message || ''}`);
       }
     } else {
       // CREATE
       const newSub = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         brand: finalBrand,
         amount: parseFloat(formData.amount),
         currency: formData.currency,
@@ -204,7 +205,7 @@ function Subscriptions({ token }) {
         }
       } catch (err) {
         console.error(err);
-        setError('Connection error: Failed to reach the server. Please check if backend is running.');
+        setError(`Connection error: Failed to reach the server. ${err.message || ''}`);
       }
     }
   };

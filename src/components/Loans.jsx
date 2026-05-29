@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Landmark, MoreHorizontal } from 'lucide-react';
 import ModernDatePicker from './ModernDatePicker';
+import { generateUUID } from '../utils/uuid';
 
 const API_URL = `http://${window.location.hostname}:3001`;
 
@@ -49,7 +50,7 @@ function Loans({ token }) {
     if (!formData.name || !formData.totalAmount) return;
     
     const newLoan = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       ...formData,
       totalAmount: parseFloat(formData.totalAmount),
       emiAmount: parseFloat(formData.emiAmount)
@@ -70,7 +71,7 @@ function Loans({ token }) {
       }
     } catch (err) {
       console.error(err);
-      setError('Connection error: Failed to reach the server. Please check if backend is running.');
+      setError(`Connection error: Failed to reach the server. ${err.message || ''}`);
     }
   };
 

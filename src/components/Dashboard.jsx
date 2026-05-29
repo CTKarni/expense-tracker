@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Calendar, ShoppingBag, CreditCard, Wallet, TrendingUp, TrendingDown, DollarSign, Archive, Utensils, Car, Clapperboard, FileText, HelpCircle, ArrowUpRight, ArrowDownRight, MoreHorizontal } from 'lucide-react';
 import ModernDatePicker from './ModernDatePicker';
+import { generateUUID } from '../utils/uuid';
 
 const API_URL = `http://${window.location.hostname}:3001`;
 
@@ -154,7 +155,7 @@ function Dashboard({ token }) {
     if (!formData.description || !formData.amount || !formData.date) return;
     
     const newExpense = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       ...formData,
       amount: parseFloat(formData.amount)
     };
@@ -177,7 +178,7 @@ function Dashboard({ token }) {
       }
     } catch (err) {
       console.error('Error adding expense', err);
-      setError('Connection error: Failed to reach the server. Please check if backend is running.');
+      setError(`Connection error: Failed to reach the server. ${err.message || ''}`);
     }
   };
 
