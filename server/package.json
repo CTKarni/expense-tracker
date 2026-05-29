@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Backend for expense tracker",
+  "description": "Backend for OmniLedger",
   "main": "index.js",
   "type": "module",
   "scripts": {

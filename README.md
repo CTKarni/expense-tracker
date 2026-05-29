@@ -1,6 +1,6 @@
-# ExpenseTracker
+# OmniLedger
 
-ExpenseTracker is a comprehensive, full-stack, and responsive expense management application. It is designed to help users log daily transactions, monitor recurring monthly subscriptions, track loans with fixed EMIs, and manage peer-to-peer debts (money lent to or borrowed from friends). 
+OmniLedger is a comprehensive, full-stack, and responsive expense management application. It is designed to help users log daily transactions, monitor recurring monthly subscriptions, track loans with fixed EMIs, and manage peer-to-peer debts (money lent to or borrowed from friends). 
 
 The project uses a **React (Vite) frontend** and an **Express.js backend** backed by a **SQLite database**, securing data access with **Firebase Authentication (Google Sign-In)** and fallback development modes.
 

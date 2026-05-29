@@ -19,7 +19,7 @@ function Sidebar({ user, onLogout }) {
     <aside className="sidebar">
       <div className="sidebar-logo">
         <Wallet size={24} />
-        <span>ExpenseTracker</span>
+        <span>OmniLedger</span>
       </div>
       
       <nav className="nav-links">

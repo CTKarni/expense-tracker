@@ -99,7 +99,7 @@ function App() {
     return (
       <div className="auth-wrapper">
         <div className="auth-container">
-          <h2>Welcome to ExpenseTracker</h2>
+          <h2>Welcome to OmniLedger</h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Sign in to manage your expenses, subscriptions, and loans.</p>
           <button className="google-btn" onClick={handleGoogleSignIn}>
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" style={{ width: 18 }}/>
